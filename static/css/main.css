@@ -141,6 +141,27 @@ main.container {
     border-radius: 12px;
 }
 
+
+#task-list-section-header-container {
+    display: flex;
+    flex-direction: row;
+    gap: 10%;
+}
+
+
+#task-list-sort-filter-container {
+    display: flex;
+    flex-direction: row;
+    gap: 20%;
+}
+
+
+.sort-filter-elem {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
 .task-item {
     display: flex;
     justify-content: flex-start;

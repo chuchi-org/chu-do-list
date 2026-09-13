@@ -58,7 +58,26 @@
             
             <!-- task list section -->
             <section class="task-list-section">
-                <h2>Your Tasks</h2>
+                <div id="task-list-section-header-container">
+                    <h2>Your Tasks</h2>
+                    <div id="task-list-sort-filter-container">
+                        <div id="task-list-sort-container" class="sort-filter-elem">
+                            <label for="sort-task-list" id="sort-label">Sort by:</label>
+                            <select name="" id="sort-task-list">
+                                <option value="">Priority</option>
+                                <option value="">Due Date</option>
+                                <option value="">Date Added</option>
+                            </select>
+                        </div>
+                        
+                        <fieldset id="task-list-filter-container" class="sort-filter-elem">
+                            <legend id="filter-label">Filter by tag:</legend>
+                            <label><input type="checkbox" name="filter-tag" value="academic">Academic</label>
+                            <label><input type="checkbox" name="filter-tag" value="personal">Personal</label>
+                            <label><input type="checkbox" name="filter-tag" value="none">No tag</label>
+                        </fieldset>
+                    </div>
+                </div>
                 <ul id="task-list">
                     <!-- tasks are injected via JS -->
                 </ul>
