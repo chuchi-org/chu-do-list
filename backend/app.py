@@ -13,6 +13,13 @@ app = Flask(__name__, template_folder="../templates", static_folder="../static")
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/login")
+def login():
+    return render_template("login.html")
+
+
 @app.route("/tasks", methods=["GET"])
 # read
 def get_tasks():

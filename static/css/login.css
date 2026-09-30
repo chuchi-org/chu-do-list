@@ -1,0 +1,24 @@
+/* FILENAME: login.css */
+#center-div {
+    display: flex;
+    flex-direction: column;
+}
+
+#clickables {
+    display: flex;
+    flex-direction: column;
+}
+
+#login-modal-container {
+    display: flex;
+    flex-direction: column;
+}
+
+#login-modal-container.hidden {
+    display: none;
+}
+
+#login-form {
+    display: flex;
+    flex-direction: column;
+}
