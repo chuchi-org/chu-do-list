@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sign Up - Chu-Do List</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    </head>
+    <body>
+        <main class="container">
+            <div class="add-task-card">
+                <header class="app-header">
+                    <h1>Sign Up to Chu-Do List</h1>
+                </header>
+
+                <hr class="section-divider">
+
+                <form id="signup-form">
+                    <p>Display Name</p>
+                    <input type="text" id="display-name" name="displayName" required>
+
+                    <p>Email</p>
+                    <input type="text" id="email" name="email" required>
+
+                    <p>Password</p>
+                    <input type="text" id="password" name="password" required>
+
+                    <p id="signup-error" class="form-error hidden"></p>
+                
+                    <br>
+                    <button type="submit" id="signup-submit-btn">Sign Up</button>
+                </form>
+
+                <p>Already have an account? <a href="/login">Log-in</a></p>     <!-- points to Flask's log-in  route-->
+            </div>
+        </main>
+        
+        <footer>
+                © 2026 chuhchi-org
+        </footer>
+        
+        <script src = "{{ url_for('static', filename='js/signup.js') }}"></script>
+    </body>
+</html>
