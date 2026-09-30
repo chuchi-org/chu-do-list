@@ -1,12 +1,15 @@
 from flask import Flask,jsonify, request, render_template
 import sqlite3
 from pathlib import Path
+import re
+from werkzeug.security import generate_password_hash
 
 # dynamically creates an absolute file path to tasks.db located in the same folder of app.py
 # __file__ : Python's built-in reference to the current script's path
 DB_PATH = Path(__file__).parent / "tasks.db"
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
 
+# ----- TASK ROUTES -----
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -83,6 +86,7 @@ def update_task(task_id):
 
     return jsonify({"status": "updated", "id": task_id})
 
+# delete
 @app.route("/tasks/<int:task_id>", methods=["DELETE"])
 def delete_task(task_id):
     connection  = sqlite3.connect(DB_PATH)
@@ -94,15 +98,68 @@ def delete_task(task_id):
 
     return jsonify({"status": "deleted", "id": task_id})
 
+# ----- SIGNUP ROUTE -----
+EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")     # basic email structure for reference
+
+@app.route("/signup", methods=["POST"])
+def signup():
+    data = request.get_json()
+
+    display_name = data.get("display_name", "").strip()
+    email        = data.get("email", "").strip()
+    password     = data.get("password", "")
+
+    # require all fields to be filled up
+    if not display_name or not email or not password:
+        return jsonify({"error": "All fields are required."}), 400      # 400 - bad request
+
+    # reejcts malformed or invalid email address
+    if not EMAIL_REGEX.match(email):
+        return jsonify({"error": "Please enter a valid email address."}), 400
+
+    if len(password) < 8:
+        return jsonify({"error": "Your password must be at least 8 characters long."}), 400
+
+    connection  = sqlite3.connect(DB_PATH)
+    cursor      = connection.cursor()
+
+    # check if account already exists
+    cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+    if cursor.fetchone() is not None:
+        cursor.close()
+        connection.close()
+        return jsonify({"error": "An account with this email already exists."}), 409    # 409 - request conflict
+
+    # hashing password for security
+    # generate_password_hash also adds a salt to differentiate two users with identical passwords
+    password_hash   = generate_password_hash(password)
+
+    # store into db
+    cursor.execute(
+        "INSERT INTO users (display_name, email, password_hash) VALUES (?, ?, ?)",
+        (display_name, email, password_hash)
+    )
+    
+    connection.commit()
+    new_id = cursor.lastrowid  # grabs the auto-generated id of the row just inserted
+    cursor.close()
+    connection.close()
+
+    return jsonify({"id": new_id, "display_name": display_name, "email": email}), 201
+
 if __name__ == "__main__":
     connection = sqlite3.connect(DB_PATH)
     cursor = connection.cursor()
 
     # create task table
-    create_schema_command = """CREATE TABLE IF NOT EXISTS
+    create_task_schema_command = """CREATE TABLE IF NOT EXISTS
     tasks(id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, due_datetime TEXT, priority INTEGER, tag TEXT, is_done INTEGER, created_at TEXT)"""
+    cursor.execute(create_task_schema_command)
 
-    cursor.execute(create_schema_command)
+    #create user table
+    create_user_schema_command = """CREATE TABLE IF NOT EXISTS
+    users(id INTEGER PRIMARY KEY AUTOINCREMENT, display_name TEXT, email TEXT UNIQUE, password_hash TEXT)"""
+    cursor.execute(create_user_schema_command)
     connection.commit()     # permanently saves all the pending changes made during the current transaction to the database file
     cursor.close()          # closes the opened Cursor
     connection.close()      # terminates the active link between Py script and SQLite DB
