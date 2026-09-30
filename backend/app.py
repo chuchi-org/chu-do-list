@@ -1,13 +1,20 @@
-from flask import Flask,jsonify, request, render_template
+# FILENAME: app.py
+from flask import Flask,jsonify, request, render_template, session
 import sqlite3
 from pathlib import Path
 import re
-from werkzeug.security import generate_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
+import os
+from dotenv import load_dotenv
+
+load_dotenv()   # reads .env into os.environ
+                # must run always before code below
 
 # dynamically creates an absolute file path to tasks.db located in the same folder of app.py
 # __file__ : Python's built-in reference to the current script's path
 DB_PATH = Path(__file__).parent / "tasks.db"
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
+app.secret_key = os.environ["SECRET_KEY"]
 
 
 @app.route("/")
@@ -151,7 +158,38 @@ def signup():
     cursor.close()
     connection.close()
 
-    return jsonify({"id": new_id, "display_name": display_name, "email": email}), 201
+    return jsonify({"id": new_id, "display_name": display_name, "email": email}), 201   # 201 = sign up successful
+
+
+@app.route("/login", methods=["POST"])
+def authenticate(): # login() already exists above
+    data = request.get_json()
+
+    email    = data.get("email", "").strip()
+    password = data.get("password", "")
+
+    connection = sqlite3.connect(DB_PATH)
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT id, password_hash, display_name FROM users WHERE email = ?", (email,))
+    user = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    if user is None:
+        return jsonify({"error": "Wrong email or password"}), 401 # 401 = unathorized
+
+    # if user exists:
+    user_id, stored_hash, display_name = user   # unpacking user tuple
+
+    if not check_password_hash(stored_hash, password):
+        return jsonify({"error": "Wrong email or password"}), 401
+
+    session["user_id"] = user_id
+
+    return jsonify({"id": user_id, "display_name": display_name}), 200 # 200 = successful
+
 
 if __name__ == "__main__":
     connection = sqlite3.connect(DB_PATH)
