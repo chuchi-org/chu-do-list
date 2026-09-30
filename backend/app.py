@@ -9,10 +9,12 @@ from werkzeug.security import generate_password_hash
 DB_PATH = Path(__file__).parent / "tasks.db"
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
 
-# ----- TASK ROUTES -----
+
 @app.route("/")
 def index():
     return render_template("index.html")
+
+# ----- TASK ROUTES -----
 @app.route("/tasks", methods=["GET"])
 # read
 def get_tasks():
@@ -92,6 +94,10 @@ def delete_task(task_id):
     return jsonify({"status": "deleted", "id": task_id})
 
 # ----- SIGNUP ROUTE -----
+@app.route("/signup")
+def signup_page():
+    return render_template("signup.html")
+
 EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")     # basic email structure for reference
 
 @app.route("/signup", methods=["POST"])
