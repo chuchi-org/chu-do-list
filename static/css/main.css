@@ -194,6 +194,15 @@ main.container {
     opacity: 0.85;
 }
 
+.form-error {
+    color: var(--RED);
+    margin: 0.25rem 0;
+    font-size: 0.9rem;
+}
+
+.form-error.hidden {
+    display: none;
+}
 
 footer {
     flex-shrink: 0;
