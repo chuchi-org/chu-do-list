@@ -3,3 +3,5 @@ venv/
 tasks.db
 tasktest.html
 activating_venv.txt
+questions.md
+.env
