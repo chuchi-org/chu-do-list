@@ -363,20 +363,6 @@ if __name__ == "__main__":
     users(id INTEGER PRIMARY KEY AUTOINCREMENT, display_name TEXT, email TEXT UNIQUE, password_hash TEXT)"""
     cursor.execute(create_user_schema_command)
 
-    # to Yona,
-    # after mo run liwat ka app.py delete this entire block hehe
-    # START deleting here
-    try:
-        cursor.execute("ALTER TABLE users ADD COLUMN reset_token TEXT")
-    except sqlite3.OperationalError:
-        pass  # Column already exists
-
-    try:
-        cursor.execute("ALTER TABLE users ADD COLUMN reset_token_expiry TEXT")
-    except sqlite3.OperationalError:
-        pass  # Column already exists
-    # END here po
-
     connection.commit()     # permanently saves all the pending changes made during the current transaction to the database file
     cursor.close()          # closes the opened Cursor
     connection.close()      # terminates the active link between Py script and SQLite DB
