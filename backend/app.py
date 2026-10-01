@@ -168,7 +168,7 @@ def signup():
 
     return jsonify({"id": new_id, "display_name": display_name, "email": email}), 201   # 201 = sign up successful
 
-
+# ----- LOGIN ROUTE -----
 @app.route("/login", methods=["POST"])
 def authenticate(): # login() already exists above
     data = request.get_json()
@@ -198,6 +198,102 @@ def authenticate(): # login() already exists above
 
     return jsonify({"id": user_id, "display_name": display_name}), 200 # 200 = successful
 
+# ----- PROFILE ROUTE -----
+#get
+@app.route("/profile", methods=["GET"])
+def get_profile():
+    # access-control mechanism for profile page
+    user_id = session.get("user_id")
+    if user_id is None:
+        return redirect("/login")
+
+    connection  = sqlite3.connect(DB_PATH)
+    cursor      = connection.cursor()
+    cursor.execute("SELECT display_name, email FROM users WHERE id=?", (user_id,))
+    row         =  cursor.fetchone()
+    cursor.close()
+    connection.close()
+
+    # edge case handling for valid session but nonexisting account
+    if row is None:
+        return redirect("/login")
+
+    # renders profile.html with display name & email pre-filled
+    return render_template("profile.html", display_name=row[0], email=row[1])
+
+
+
+# update
+@app.route("/profile", methods=["PUT"])
+def update_profile():
+    # only accept user_id from the session, not anywhere else
+    user_id = session.get("user_id")
+    if user_id is None:
+        return jsonify({"error": "Not logged in."}), 401    # 401 - Unauthorized
+
+    data = request.get_json()       # parse the incoming payload into a dict
+
+    connection  = sqlite3.connect(DB_PATH)
+    cursor      = connection.cursor()
+
+    # fetch all current values before any change can be done by the user
+    cursor.execute("SELECT display_name, email, password_hash FROM users WHERE id=?", (user_id,))
+
+    # catches edge case where a valid session references a user_id that has since been deleted in DB
+    row = cursor.fetchone()
+    if row is None:
+        cursor.close()
+        connection.close()
+        return jsonify({"error": "Account no longer exists."}), 404
+
+    # unpack the tuple into variables
+    current_display_name, current_email, current_password_hash = row
+
+    # use new user input if it exists, else fall back to what's already stored
+    display_name    = data.get("display_name", current_display_name).strip()
+    email           = data.get("email", current_email).strip()
+    new_password    = data.get("password")
+
+    # reject empty user input
+    if not display_name or not email:
+        cursor.close()
+        connection.close()
+        return jsonify({"error": "Display name and email cannot be empty."}), 400
+
+    # reject invalid email address
+    if not EMAIL_REGEX.match(email):
+        cursor.close()
+        connection.close()
+        return jsonify({"error": "Please enter a valid email address."}), 400
+
+    # check if any other accounts use the new inputted email
+    cursor.execute("SELECT id FROM users WHERE email = ? AND id != ?", (email, user_id))
+    if cursor.fetchone() is not None:
+        cursor.close()
+        connection.close()
+        return jsonify({"error": "This email is already in use by another account."}), 409    # 409 - request conflict
+
+    # only runs if a new password was submitted
+    if new_password is not None:
+        if len(new_password) < 8:
+            cursor.close()
+            connection.close()
+            return jsonify({"error": "Password must be at least 8 characters long."}), 400
+        password_hash = generate_password_hash(new_password) 
+    else:
+        password_hash = current_password_hash   # keeps current password if no new one was submitted
+
+    # updates all three columns at once regardless of whether a field was changed
+    cursor.execute(
+        "UPDATE users SET display_name = ?, email = ?, password_hash = ? WHERE id = ?",
+        (display_name, email, password_hash, user_id)
+    )
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+    # return updated values so frontend can confirm and display them
+    return jsonify({"display_name": display_name, "email": email}), 200
 
 if __name__ == "__main__":
     connection = sqlite3.connect(DB_PATH)

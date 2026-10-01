@@ -15,6 +15,7 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    background-color: var(--LIGHT-PINK);
 }
 
 main {
@@ -98,7 +99,8 @@ main.container {
     margin-bottom: 0;
 }
 
-#task-form input, #task-form select {
+#task-form input, #task-form select,
+#profile-form input, #profile-form select {
     padding: 0.5rem;
     border: 1px solid var(--BLACK);
     border-radius: 0.5rem;
@@ -106,7 +108,7 @@ main.container {
     font-size: 1rem;
 }
 
-#submit-btn {
+#submit-btn, #profile-submit-btn {
     background: var(--GREEN);
     color: var(--BLACK);
     border: none;
@@ -215,6 +217,22 @@ main.container {
     opacity: 0.85;
 }
 
+.logout-btn {
+    background: var(--DARK-PINK);
+    color: var(--BLACK);
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-family: var(--TEXT-FONT);
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+}
+
+.logout-btn:hover {
+    background: var(--RED);
+    color: var(--BACKGROUND);
+}
+
 .form-error {
     color: var(--RED);
     margin: 0.25rem 0;
@@ -223,6 +241,12 @@ main.container {
 
 .form-error.hidden {
     display: none;
+}
+
+.form-success {
+    color: var(--GREEN);
+    font-size: 0.9rem;
+    margin: 0.25rem 0;
 }
 
 footer {

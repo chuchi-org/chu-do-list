@@ -37,7 +37,7 @@ loginForm.addEventListener('submit', async function (event) {
 
     if (response.ok) {
         // proceed to to-do list
-        location.href = '/';
+        location.href = 'profile';
     } else {
         showError(data.error);
     }
