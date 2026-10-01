@@ -1,0 +1,127 @@
+/**FILENAME: signup.css**/
+
+@import url(variables.css);
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--TEXT-FONT);
+    max-width: 600px;
+    min-height: 100vh;
+    margin: 2rem auto;
+    padding: 2rem 1rem;
+    color: var(--BLACK-TEXT);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: var(--LIGHT-PINK);
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    flex: 2;
+}
+
+#center-div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1rem;
+    padding: 3rem 1.5rem;
+}
+
+#center-div h1 {
+    font-family: var(--TEXT-FONT);
+    font-size: 1.75rem;
+    margin-bottom: 2rem;
+    margin-top: 0;
+}
+
+.signup-card {
+    background: var(--LIGHT-PINK);
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.2);
+    max-width: 400px;
+    width: 100%;
+    text-align: left;
+}
+
+#signup-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.field-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+#signup-form label {
+    font-family: var(--TEXT-FONT);
+    font-size: 1rem;
+}
+
+#signup-form input {
+    padding: 0.5rem;
+    border: 1px solid var(--BLACK);
+    border-radius: 0.5rem;
+    font-family: var(--TEXT-FONT);
+    font-size: 1rem;
+    width: 100%;
+}
+
+#signup-submit-btn {
+    background: var(--GREEN);
+    color: var(--BLACK);
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-family: var(--TEXT-FONT);
+    font-size: 1rem;
+    padding: 0.75rem;
+}
+
+#signup-submit-btn:hover {
+    background: #989548;
+}
+
+#signup-error {
+    color: var(--RED);
+    font-size: 0.9rem;
+    margin: 0.25rem 0;
+}
+
+#signup-error.hidden {
+    display: none;
+}
+
+#login-link {
+    display: block;
+    width: 100%;
+    max-width: 400px;
+    margin-top: 1rem;
+    color: var(--BLACK);
+    padding: 0.6rem 1.5rem;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-family: var(--TEXT-FONT);
+    text-decoration: underline;
+    text-align: center;
+}
+
+#login-link:hover {
+    color: var(--DARK-PINK);
+}
+
+footer {
+    flex-shrink: 0;
+    text-align: center;
+    padding: 1.5rem 1rem;
+}
