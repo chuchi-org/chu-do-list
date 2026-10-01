@@ -3,6 +3,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const form      = document.getElementById('profile-form');
     const errorEl   = document.getElementById('profile-error');
     const successEl = document.getElementById('profile-success');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    logoutBtn.addEventListener('click', async () => {
+        const response = await fetch('/logout', { method: 'POST' });
+        if (response.ok) {
+            location.href = '/login';
+        }
+    })
+
+
+
 
     form.addEventListener('submit', async function (event) {
         event.preventDefault(); // intrcepts form's submit event and stops browser's native page-reload behavior
