@@ -6,6 +6,8 @@ import re
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from dotenv import load_dotenv
+import secrets
+from datetime import datetime, timedelta
 
 load_dotenv()   # reads .env into os.environ
                 # must run always before code below
@@ -29,11 +31,57 @@ def login():
     return render_template("login.html")
 
 
+@app.route("/forgot-password")
+def forgot_password():
+    return render_template("forgot-password.html")
+
 @app.route("/logout", methods=["POST"])
 def logout():
     session.clear()
     return jsonify({"status": "Session ended"}), 200
 
+
+# ----- FORGOT PASSWORD ROUTE ----- #
+@app.route("/forgot-password", methods=["POST"])
+def forget_password():
+    data = request.get_json()
+    email = data.get("email", "").strip()
+
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+    
+    connection = sqlite3.connect(DB_PATH)
+    cursor = connection.cursor()
+
+    # look up user by email
+    cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+    user = cursor.fetchone()
+
+    if user is None:
+        cursor.close()
+        connection.close()
+        return jsonify({"error": "An error occured. Try again later."}), 200
+
+
+    if user is not None:
+        # if user exists:
+        # generate secure token and expiry time
+        user_id = user[ 0]
+        token = secrets.token_urlsafe(32)
+        expiry= (datetime.now() + timedelta(minutes=5)).isoformat()
+
+        # update the user's row with token & expiry
+        cursor.execute("UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE id = ?", (token, expiry, user_id))
+
+        connection.commit()
+    
+    cursor.close()
+    connection.close()
+
+
+    return jsonify({
+        "status": "If given email exists, a password link has been sent.",
+    }), 200
 
 
 # ----- TASK ROUTES -----
@@ -308,6 +356,21 @@ if __name__ == "__main__":
     create_user_schema_command = """CREATE TABLE IF NOT EXISTS
     users(id INTEGER PRIMARY KEY AUTOINCREMENT, display_name TEXT, email TEXT UNIQUE, password_hash TEXT)"""
     cursor.execute(create_user_schema_command)
+
+    # to Yona,
+    # after mo run liwat ka app.py delete this entire block hehe
+    # START deleting here
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN reset_token TEXT")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN reset_token_expiry TEXT")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+    # END here po
+
     connection.commit()     # permanently saves all the pending changes made during the current transaction to the database file
     cursor.close()          # closes the opened Cursor
     connection.close()      # terminates the active link between Py script and SQLite DB
