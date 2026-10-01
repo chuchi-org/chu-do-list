@@ -11,6 +11,12 @@ loginModalBtn.addEventListener('click', () => {
     loginModal.classList.toggle('hidden');
 });
 
+loginModal.addEventListener('click', function (event) {
+    if (event.target === loginModal) {
+        loginModal.classList.add('hidden');
+    }
+});
+
 
 // toggle error message visibility
 function showError(message) {
