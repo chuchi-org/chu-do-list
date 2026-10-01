@@ -26,14 +26,19 @@ def index():
 
 @app.route("/login")
 def login():
-    return render_template("login.html")
-
+    if session.get("user_id") is not None:
+        return redirect("/profile")     # prevent back button of browser to go to previous page when logged in
+    response = render_template("login.html")
+    # tells browser to not cache this page for back / forward restoration
+    return response, 200, {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "Pragma": "no-cache"
+    }
 
 @app.route("/logout", methods=["POST"])
 def logout():
     session.clear()
     return jsonify({"status": "Session ended"}), 200
-
 
 
 # ----- TASK ROUTES -----
