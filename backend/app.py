@@ -1,5 +1,5 @@
 # FILENAME: app.py
-from flask import Flask,jsonify, request, render_template, session
+from flask import Flask,jsonify, request, render_template, session, redirect
 import sqlite3
 from pathlib import Path
 import re
@@ -19,12 +19,20 @@ app.secret_key = os.environ["SECRET_KEY"]
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    if "user_id" not in session:            # if user_id key is missing,
+        return redirect("/login")           # sends them to login, before index could render
+    return render_template("index.html")    # proceeds to index/to-do list
 
 
 @app.route("/login")
 def login():
     return render_template("login.html")
+
+
+@app.route("/logout", methods=["POST"])
+def logout():
+    session.clear()
+    return jsonify({"status": "Session ended"}), 200
 
 
 
