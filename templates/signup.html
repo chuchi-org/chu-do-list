@@ -3,35 +3,37 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Sign Up - Chu-Do List</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+        <title>Chu-Do List | Sign Up</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/signup.css') }}">
     </head>
     <body>
-        <main class="container">
-            <div class="add-task-card">
-                <header class="app-header">
+        <main>
+            <div id="center-div">
+                <div class="signup-card">
                     <h1>Sign Up to Chu-Do List</h1>
-                </header>
+                    <form id="signup-form">
+                        <div class="field-container">
+                            <label for="display-name">Display Name</label>
+                            <input type="text" id="display-name" name="displayName" required>
+                        </div>
 
-                <hr class="section-divider">
+                        <div class="field-container">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
 
-                <form id="signup-form">
-                    <p>Display Name</p>
-                    <input type="text" id="display-name" name="displayName" required>
+                        <div class="field-container">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" required>
+                        </div>
 
-                    <p>Email</p>
-                    <input type="text" id="email" name="email" required>
+                        <p id="signup-error" class="form-error hidden"></p>
 
-                    <p>Password</p>
-                    <input type="text" id="password" name="password" required>
+                        <button type="submit" id="signup-submit-btn">Sign Up</button>
+                    </form>
+                </div>
 
-                    <p id="signup-error" class="form-error hidden"></p>
-                
-                    <br>
-                    <button type="submit" id="signup-submit-btn">Sign Up</button>
-                </form>
-
-                <p>Already have an account? <a href="/login">Log-in</a></p>     <!-- points to Flask's log-in  route-->
+                <a id="login-link" href="/login">Already have an account? Log in</a>
             </div>
         </main>
         
