@@ -63,22 +63,18 @@ def forget_password():
     cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
     user = cursor.fetchone()
 
-    if user is None:
-        cursor.close()
-        connection.close()
-        return jsonify({"error": "An error occured. Try again later."}), 200
-
-
     if user is not None:
         # if user exists:
         # generate secure token and expiry time
-        user_id = user[ 0]
+        user_id = user[0]
         token = secrets.token_urlsafe(32)
+        print(f"[DEMO] Reset code for {email}: {token}")
         expiry= (datetime.now() + timedelta(minutes=5)).isoformat()
 
         # update the user's row with token & expiry
-        cursor.execute("UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE id = ?", (token, expiry, user_id))
-
+        cursor.execute("UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE id = ?",
+                        (token, expiry, user_id)
+        )
         connection.commit()
     
     cursor.close()
@@ -86,9 +82,47 @@ def forget_password():
 
 
     return jsonify({
-        "status": "If given email exists, a password link has been sent.",
+        "status": "If that email is registered, a reset code has been generated.",
     }), 200
 
+
+# ----- RESET PASSWORD ROUTES ----- #
+@app.route("/reset-password")
+def reset_password_page():
+    return render_template("reset-password.html")
+
+@app.route("/reset-password", methods=["POST"])
+def reset_password():
+    data = request.get_json()
+    token = data.get("token", "").strip()
+    new_password = data.get("password", "")
+
+    if not token or not new_password:
+        return jsonify({"error": "Reset code and new password are required."}), 400
+
+    if len(new_password) < 8:
+        return jsonify({"error": "Password must be at least 8 characters long."}), 400
+
+    connection = sqlite3.connect(DB_PATH)
+    cursor = connection.cursor()
+
+    cursor.execute("SELECT id, reset_token_expiry FROM users WHERE reset_token = ?", (token,))
+    user = cursor.fetchone()
+
+    if user is None or (datetime.fromisoformat(user[1]) < datetime.now()):
+        cursor.close()
+        connection.close()
+        return jsonify({"error": "Invalid or expired reset code."}), 400
+
+    password_hash = generate_password_hash(new_password)
+
+    cursor.execute("UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL WHERE id = ?", (password_hash, user[0]))
+
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+    return jsonify({"status": "password_reset"}), 200
 
 # ----- TASK ROUTES -----
 @app.route("/tasks", methods=["GET"])
