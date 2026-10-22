@@ -383,17 +383,19 @@ def update_profile():
     # return updated values so frontend can confirm and display them
     return jsonify({"display_name": display_name, "email": email}), 200
 
-if __name__ == "__main__":
+# === NEW TABLE CREATION FOR LAB 3 === #
+    
+# enable foreign keys for all connections
+def get_connection():
     connection = sqlite3.connect(DB_PATH)
-    cursor = connection.cursor()
+    connection.execute("PRAGMA foreign_keys = ON;")
+    return connection
 
-    # === NEW FOR LAB 3 === #
-    # enable foreign keys for all connections
-    cursor.execute("PRAGMA foreign_keys = ON;")
+def init_db():
+    connection = get_connection()
+    cursor      = connection.cursor()
 
-    # === NEW FOR LAB 3 === #
-    # create user table if does not exist
-    create_user_schema_command =  """
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id                  INTEGER PRIMARY KEY AUTOINCREMENT,
             display_name        TEXT,
@@ -402,12 +404,29 @@ if __name__ == "__main__":
             reset_token         TEXT,
             reset_token_expiry  TEXT
         )
-    """
-    cursor.execute(create_user_schema_command)
+    """)
 
-    # === NEW FOR LAB 3 === #
-    # create tasks table if does not exist
-    create_task_schema_command = """
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS lists (
+        id          INTEGER PRIMARY KEY AUTOINCREMENT,
+        name        TEXT NOT NULL,
+        owner_id    INTEGER NOT NULL,
+        FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS list_members (
+        list_id     INTEGER NOT NULL,
+        user_id     INTEGER NOT NULL,
+        role        TEXT DEFAULT 'collaborator',
+        PRIMARY KEY (list_id, user_id),
+        FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """)
+
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS tasks (
             id              INTEGER PRIMARY KEY AUTOINCREMENT,
             title           TEXT,
@@ -415,55 +434,30 @@ if __name__ == "__main__":
             priority        INTEGER,
             tag             TEXT,
             is_done         INTEGER,
-            created_at      TEXT
-        )
-    """
-    cursor.execute(create_task_schema_command)
-
-    # === NEW FOR LAB 3 === #
-    # create list table if does not exist
-    create_list_schema_command = """
-        CREATE TABLE IF NOT EXISTS lists (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            owner_id INTEGER NOT NULL,
-            FOREIGN KEY (owner_id) REFERENCES users(id) on DELETE CASCADE
-        )
-    """
-    cursor.execute(create_list_schema_command)
-
-
-    # === NEW FOR LAB 3 === #
-    # create list_members junction table with composite primary key
-    create_tasklist_schema_command = """
-        CREATE TABLE IF NOT EXISTS list_members (
-            list_id  INTEGER NOT NULL,
-            user_id  INTEGER NOT NULL,
-            role     TEXT DEFAULT 'member',
-            PRIMARY KEY (list_id, user_id),
+            created_at      TEXT,
+            user_id         INTEGER NOT NULL,
+            is_personal     INTEGER NOT NULL DEFAULT 1 CHECK (is_personal IN (0, 1)),
+            list_id         INTEGER,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
             FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+            CHECK ((is_personal = 1 AND list_id IS NULL)
+                    OR (is_personal = 0 AND list_id IS NOT NULL))
         )
-    """
-    cursor.execute(create_tasklist_schema_command)
+    """)
 
-
-    # === NEW FOR LAB 3 === #
-    # dynamically alter tasks table to add user_id and list_id if missing
+    # guard; check if machine still has the old database and prompts them to delete tasks.db
     cursor.execute("PRAGMA table_info(tasks)")
-    existing_columns = [column[1] for column in cursor.fetchall()]
-
-    if "user_id" not in existing_columns:
-        cursor.execute("ALTER TABLE tasks ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE CASCADE")
-        print("[Migration] Added 'user_id' column to tasks table.")
-
-    if "list_id" not in existing_columns:
-        cursor.execute("ALTER TABLE tasks ADD COLUMN list_id INTEGER REFERENCES lists(id) ON DELETE SET NULL")
-        print("[Migration] Added 'list_id' column to tasks table.")
-
+    task_columns = [c[1] for c in cursor.fetchall()]
+    cursor.execute("PRAGMA table_info(users)")
+    user_columns = [c[1] for c in cursor.fetchall()]
+    if"is_personal" not in task_columns or "reset_token" not in user_columns:
+        connection.close()
+        raise SystemExit("Old tasks.db detected. Delete tasks.db and restart app.py")
 
     connection.commit()     # permanently saves all the pending changes made during the current transaction to the database file
     cursor.close()          # closes the opened Cursor
     connection.close()      # terminates the active link between Py script and SQLite DB
 
+if __name__ == "__main__":
+    init_db()
     app.run(debug=True)
