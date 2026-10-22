@@ -318,3 +318,4 @@ Re-verifies the token and expiry, hashes and stores the new password, and clears
 
 ### Password Recovery
 ![Forgot password flow](screenshots/password-recovery.png)
+

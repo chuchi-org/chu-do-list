@@ -387,15 +387,80 @@ if __name__ == "__main__":
     connection = sqlite3.connect(DB_PATH)
     cursor = connection.cursor()
 
-    # create task table
-    create_task_schema_command = """CREATE TABLE IF NOT EXISTS
-    tasks(id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, due_datetime TEXT, priority INTEGER, tag TEXT, is_done INTEGER, created_at TEXT)"""
+    # === NEW FOR LAB 3 === #
+    # enable foreign keys for all connections
+    cursor.execute("PRAGMA foreign_keys = ON;")
+
+    # === NEW FOR LAB 3 === #
+    # create user table if does not exist
+    create_user_schema_command =  """
+        CREATE TABLE IF NOT EXISTS users (
+            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+            display_name        TEXT,
+            email               TEXT UNIQUE,
+            password_hash       TEXT,
+            reset_token         TEXT,
+            reset_token_expiry  TEXT
+        )
+    """
+    cursor.execute(create_user_schema_command)
+
+    # === NEW FOR LAB 3 === #
+    # create tasks table if does not exist
+    create_task_schema_command = """
+        CREATE TABLE IF NOT EXISTS tasks (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            title           TEXT,
+            due_datetime    TEXT,
+            priority        INTEGER,
+            tag             TEXT,
+            is_done         INTEGER,
+            created_at      TEXT
+        )
+    """
     cursor.execute(create_task_schema_command)
 
-    #create user table
-    create_user_schema_command = """CREATE TABLE IF NOT EXISTS
-    users(id INTEGER PRIMARY KEY AUTOINCREMENT, display_name TEXT, email TEXT UNIQUE, password_hash TEXT)"""
-    cursor.execute(create_user_schema_command)
+    # === NEW FOR LAB 3 === #
+    # create list table if does not exist
+    create_list_schema_command = """
+        CREATE TABLE IF NOT EXISTS lists (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            owner_id INTEGER NOT NULL,
+            FOREIGN KEY (owner_id) REFERENCES users(id) on DELETE CASCADE
+        )
+    """
+    cursor.execute(create_list_schema_command)
+
+
+    # === NEW FOR LAB 3 === #
+    # create list_members junction table with composite primary key
+    create_tasklist_schema_command = """
+        CREATE TABLE IF NOT EXISTS list_members (
+            list_id  INTEGER NOT NULL,
+            user_id  INTEGER NOT NULL,
+            role     TEXT DEFAULT 'member',
+            PRIMARY KEY (list_id, user_id),
+            FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+    """
+    cursor.execute(create_tasklist_schema_command)
+
+
+    # === NEW FOR LAB 3 === #
+    # dynamically alter tasks table to add user_id and list_id if missing
+    cursor.execute("PRAGMA table_info(tasks)")
+    existing_columns = [column[1] for column in cursor.fetchall()]
+
+    if "user_id" not in existing_columns:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE CASCADE")
+        print("[Migration] Added 'user_id' column to tasks table.")
+
+    if "list_id" not in existing_columns:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN list_id INTEGER REFERENCES lists(id) ON DELETE SET NULL")
+        print("[Migration] Added 'list_id' column to tasks table.")
+
 
     connection.commit()     # permanently saves all the pending changes made during the current transaction to the database file
     cursor.close()          # closes the opened Cursor
