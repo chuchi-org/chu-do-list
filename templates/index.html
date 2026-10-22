@@ -59,7 +59,10 @@
             <div class="add-task-card">
                 <!-- title + add task btn -->
                 <header class="app-header">
-                    <h1>Chu-Do List</h1>
+                    <div class="header-left">
+                        <button id="toggle-sidebar-btn" class="icon-btn" title="Open Lists Menu">☰</button>
+                        <h1 id="active-list-title">Personal Tasks</h1>
+                    </div>
                     <button id="add-task-btn" type="button">+</button>
                 </header>
                 
@@ -168,8 +171,10 @@
         </footer>
         
         <!-- JS scripts -->
-        <script src = "{{ url_for('static', filename='js/task.js') }}"></script>
-        <script src = "{{ url_for('static', filename='js/tasksRender.js') }}"></script>
-        <script src = "{{ url_for('static', filename='js/ui.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/task.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/tasksRender.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/collab.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
     </body>
 </html>
