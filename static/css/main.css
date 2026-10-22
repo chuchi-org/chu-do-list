@@ -72,6 +72,266 @@ main.container {
     margin: 1rem 0;
 }
 
+
+/* ==================== COLLAB CONTROLS IN HEADER ==================== */
+.collab-controls-bar {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed rgba(0, 0, 0, 0.2);
+}
+
+.collab-controls-bar.hidden {
+    display: none;
+}
+
+.add-member-inline {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.add-member-inline input {
+    flex: 1;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--BLACK);
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.add-member-inline button {
+    background: var(--GREEN);
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.form-feedback {
+    font-size: 0.85rem;
+    margin: 0.3rem 0 0 0;
+}
+
+/* ==================== MODAL STYLES ==================== */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.modal-backdrop.hidden {
+    display: none;
+}
+
+.modal-card {
+    background: var(--LIGHT-PINK);
+    padding: 1.5rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.modal-header h2 {
+    font-size: 1.4rem;
+    margin: 0;
+}
+
+.submit-modal-btn {
+    width: 100%;
+    margin-top: 1rem;
+    background: var(--GREEN);
+    border: none;
+    padding: 0.6rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+
+/* ==================== SIDEBAR & OVERLAY STYLES ==================== */
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 99;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-overlay.hidden {
+    display: none;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 100vh;
+    background-color: var(--LIGHT-PINK);
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.5rem 1rem;
+    transition: transform 0.3s ease-in-out;
+}
+
+.sidebar.hidden {
+    transform: translateX(-100%);
+    display: flex !important; /* Overrides standard hidden display:none to retain slide transition */
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 0.5rem;
+}
+
+.sidebar-header h2 {
+    font-family: var(--TITLE-FONT);
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--BLACK-TEXT);
+    padding: 0.25rem 0.5rem;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Navigation Lists */
+.sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    margin-top: 1rem;
+}
+
+.nav-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.nav-divider {
+    border: none;
+    border-top: 1px solid rgba(0, 0, 0, 0.15);
+    margin: 1rem 0;
+}
+
+.section-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 0.5rem;
+    margin-bottom: 0.3rem;
+}
+
+.section-title {
+    font-size: 0.85rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #666;
+}
+
+.add-list-btn {
+    background: var(--DARK-PINK);
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.add-list-btn:hover {
+    background: #f27395;
+}
+
+.collab-lists-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.nav-item {
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    font-family: var(--TEXT-FONT);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.2s;
+}
+
+.nav-item:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.nav-item.active {
+    background-color: var(--DARK-PINK);
+    font-weight: bold;
+}
+
+.sidebar-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.sidebar-link {
+    color: var(--BLACK-TEXT);
+    text-decoration: none;
+    font-size: 0.95rem;
+}
+
+.sidebar-link:hover {
+    text-decoration: underline;
+}
+
+
 /* form section, toggled via JS */
 .task-form-section.hidden {
     display: none;
