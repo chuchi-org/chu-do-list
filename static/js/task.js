@@ -6,7 +6,7 @@ const MED  = 2;
 const LOW  = 3;
 
 class Task {
-    constructor(title, dueDateTime, priority, tag, id = null, createdAt = null, isDone = false) {
+    constructor(title, dueDateTime, priority, tag, id = null, createdAt = null, isDone = false, listId = null, isPersonal = 1) {
         this.title       = title;
         this.dueDateTime = dueDateTime;
         this.priority    = priority;
@@ -19,6 +19,9 @@ class Task {
         this.createdAt   = createdAt ?? new Date().toISOString();
         
         this.isDone      = isDone;
+
+        this.listId      = listId;
+        this.isPersonal  = isPersonal;
     }
 
     // getters and setters are for mutable fields only
@@ -87,7 +90,9 @@ class Task {
             data.tag,
             data.id,
             data.created_at,
-            Boolean(data.is_done)   // converts returned 0/1 to false/true respectively
+            Boolean(data.is_done),   // converts returned 0/1 to false/true respectively
+            data.list_id,
+            data.is_personal
         );
     }
 }
