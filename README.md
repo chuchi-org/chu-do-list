@@ -500,3 +500,4 @@ Two accounts (A and B) were used, each in its own browser window.
 - Account A on the left, account B on the right
 
 ![Two accounts, separate task lists](screenshots/two-accounts-separate.bmp)
+
