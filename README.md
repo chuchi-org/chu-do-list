@@ -52,7 +52,46 @@ A live email-delivery service (e.g. SMTP, SendGrid) was intentionally omitted fo
 
 **Limitation:** since no real email is sent, this flow is not suitable for production use as-is — a real deployment would replace the console `print()` with an actual transactional email call (e.g. via SMTP or a service like SendGrid), with the token delivered only to the account owner's actual inbox rather than visible to whoever has terminal/log access.
 
-## How to Run the App Locally
+## Merging Branches
+[ Insert answer for #1 here]
+
+## Database Design
+
+### Tables and Relationships
+```mermaid
+erDiagram
+    users ||--o{ lists : "owns (owner_id)"
+    users ||--o{ list_members : "joins"
+    users ||--o{ list_members : "has"
+    users ||--o{ tasks: "creates(user_id)"
+    lists ||--o{ tasks : "contains (list_id, nullable)"
+```
+| Table | Purpose | Key columns |
+|--|--|--|
+| `users` | Accounts | `id`, `email` (unique), `password_hash` |
+| `lists` | Collaborative lists | `id`, `name`, `owner_id` -> `users.id` |
+| `list_members` | Who belongs to which list (many-to-many) | `(list_id, user_id)` primary key, `role` (`owner` or `collaborator`) |
+| `tasks` | Every task, personal or in a list | `user_id` -> `users.id`, `list_id` -> `list.id` (nullable), `is_personal` |
+
+- **Normalization:** 
+  - **tasks** store only the creator's `user_id` and a `list_id`. They never copy a name or email. Each fact is stored once.
+  - **Two kinds of task, one table.** A personal task has `is_personal = 1` and no `list_id`. A list task has `is_personal = 0` and a `list_id`. A list with only its creator as the member is still separate from that creator's personal tasks.
+
+- **Constraints enforced by the database itself:**
+  - `tasks.user_id` is `NOT NULL`, so no task is ownerless.
+  - A `CHECK` rejects a task that is both personal and in a list, or neither.
+  - Foreign keys are switched on for every connection (`get_connection()`), so a task can't point at a missing user or list.
+  - `ON DELETE CASCADE`: deleting a list removes its tasks and memberships, and deleting a user removes their tasks.
+
+
+## Access Control (User-based)
+
+### The Rule
+A user can touch a task only if:  
+1. it is **personal** (`is_personal = 1`) and `user_id` is theirs, or  
+2. it is a **list task** (`is_personal = 0`) and they are a **member** of the task's list.
+
+The logged-in user always comes from `session["user_id"]`, never from the request body.
 
 ### Prerequisites
 - Python 3.13 (or compatible 3.x) installed
@@ -292,6 +331,109 @@ Re-verifies the token and expiry, hashes and stores the new password, and clears
 
 **Response** — `200 OK` on success, or an error if the token is invalid/expired.
 
+---
+## API Endpoints (Tasks and Lists)
+
+All endpoints require a logged-in session. The user is always taken from the session cookie, never from the request body.
+
+### `GET /tasks`
+Returns the logged-in user's **personal** tasks.
+
+**Ownership check:** `WHERE is_personal = 1 AND user_id = <session_user>`
+
+**Response** - `200 OK`
+
+```json
+[
+    {
+        "id": 1,
+        "title": "Finish IDOR test",
+        "due_datetime": "2026-10-30T09:00",
+        "priority": 1,
+        "tag": "academics",
+        "is_done": 0,
+        "created_at": "2026-10-22T10:15",
+        "list_id": null,
+        "is_personal": 1
+    }
+]
+```
+
+**Error response** - `401 Unauthorized` (not logged in)
+```json
+{ "error": "Not logged in." }
+```
+
+### `GET /tasks?list_id=<id>`
+Returns the tasks of one collaborative list.
+
+**Ownership check:** the session user must be in `list_members` for that list. A non-member, and a list that doesn't exist,  both get the same response.
+
+**Response** - `200 OK` (same shape as above, with `"is_personal" = 0` and the list's id)
+
+**Error response** - `404 Not Found`
+```json
+{ "error": "List not found." }
+```  
+
+### `POST /tasks`
+Creates a task. Send `list_id` to create it inside a list, or leave it out for a personal task.
+
+**Request body**
+```json
+{
+    "title": "Buy groceries",
+    "due_datetime": "2026-10-30T09:00",
+    "priority": 2,
+    "tag": "personal",
+    "created_at": "2026-10-22T10:15",
+    "list_id": 5
+}
+```
+
+**Ownership check:** `user_id` comes from the session. `is_personal` is set by the server (`1` if no `list_id`, `0` otherwise) and is never read from the request. With a `list_id`, the user must be a member of that list.
+
+**Response** - `201 Created` (the saved task, including `id`, `list_id`, and `is_personal`)
+
+**Error response** - `401` (not logged in) or `404` (`"List not found."` when not not a member.)
+
+## `PUT /tasks/<id>`
+Updates `title`, `due_datetime`, `priority`, `tag`, nd `is_done`. It cannot change `user_id`, `list_id`, or `is_personal`.
+
+**Request body**
+```json
+{
+    "title": "Buy groceries and snacks",
+    "due_datetime": "2026-10-31T09:00",
+    "priority": 1,
+    "tag": "personal",
+    "is_done": 1
+}
+```
+**Ownership check:** `get_accessible_task` returns the task only if it is the user's personal task, or it belongs to a list the user is a member of. Otherwise nothing is changed.
+
+**Response** - `200 OK`
+```json
+{ "status": "updated","id": 3 }
+```
+
+**Error response** - `401` (not logged in) or `404 Not Found` (missing or not the user's)
+```json
+{ "error": "Task not found." }
+```
+
+## `DELETE /tasks/<id>`
+Deletes a task.
+
+**Ownership check:** the same `get_accessible_task` check runs before the `DELETE`. Any member of a list can delete its tasks.
+
+**Response** `200 OK`
+```json
+{ "status": "deleted", "id": 3 }
+```
+**Error response** - `401` or `404` (same as  `PUT`)
+
+---
 
 ## Screenshots
 
@@ -319,3 +461,35 @@ Re-verifies the token and expiry, hashes and stores the new password, and clears
 ### Password Recovery
 ![Forgot password flow](screenshots/password-recovery.png)
 
+### Access Control Tests
+
+### Access Control Tests
+
+Two accounts (A and B) were used, each in its own browser window.
+
+#### Logged-out request is rejected
+![401 when logged out](screenshots/idor-401-logged-out.png)
+
+#### Another user's task cannot be deleted
+
+-Account B tried to delete Account A's task
+
+![404 on delete](screenshots/idor-delete-404.png)
+
+- Account A's task is still intact after attempted deletion
+
+![Task still present](screenshots/idor-task-intact.png)
+
+#### Another user's task cannot be edited
+
+- Account B tried to edit Account A's task
+![404 on edit](screenshots/idor-put-404.png)
+
+- Account A's task is still intact after attempted edit
+![Task unchanged](screenshots/idor-put-unchanged.png)
+
+#### Each account sees only its own tasks
+
+- Account A on the left, account B on the right
+
+![Two accounts, separate task lists](screenshots/two-accounts-separate.bmp)
