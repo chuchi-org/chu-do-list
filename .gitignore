@@ -6,3 +6,5 @@ activating_venv.txt
 questions.md
 .env
 sample-acc.txt
+test_schema.py
+__pycache__/
