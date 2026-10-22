@@ -14,15 +14,22 @@ function formatDateTime(isoString) {
         hour: "numeric", minute: "2-digit"
     });
 }
-document.addEventListener('DOMContentLoaded', async function () {
-    const response = await fetch('/tasks');
-    const data     = await response.json(); // array of "plain objects" from JSON
 
-    // for each objects in data, call Task.fromJSON on it and collect the results into a new array
-    const tasks     = data.map(taskData => Task.fromJSON(taskData)); // now an array of real Task instances
 
+window.loadTasksForActiveList = async function() {
+    const listId = window.activeListId || 'personal';
+    const response = await fetch(`/tasks?list_id=${listId}`);
+
+    if ( response.status === 401 ) {
+        location.href = '/login';
+        return;
+    }
+
+    const data  = await response.json();
+    const tasks = data.map(taskData => Task.fromJSON(taskData));
     const container = document.getElementById('task-list');
-    
+    container.innerHTML = '';   // clears the previous item
+
     tasks.forEach(task => {
         const li = document.createElement('li');
         li.classList.add('task-item');
@@ -31,42 +38,47 @@ document.addEventListener('DOMContentLoaded', async function () {
             li.classList.add('done');
         }
 
-        const titleEl       = document.createElement('span');   // get HTML element
-        titleEl.textContent = task.getTitle();                  // set content to HTML element
+        const titleEl = document.createElement('span');
+        titleEl.textContent = task.getTitle();
         titleEl.classList.add('task-title');
-        li.appendChild(titleEl);                                // append to `li` container
-
-        const dueDateTimeEl       = document.createElement('span');
+        li.appendChild(titleEl);
+        
+        const dueDateTimeEl = document.createElement('span');
         dueDateTimeEl.textContent = formatDateTime(task.getDueDateTime());
-        titleEl.classList.add('task-duedate');
+        dueDateTimeEl.classList.add('task-duedate');
         li.appendChild(dueDateTimeEl);
-        
-        const tagEl       = document.createElement('span');
+
+        const tagEl = document.createElement('span');
         tagEl.textContent = task.getTag();
-        titleEl.classList.add('task-tag');
+        tagEl.classList.add('task-tag');
         li.appendChild(tagEl);
-        
-        const isDoneEl       = document.createElement('input');
+
+        const isDoneEl = document.createElement('input');
         isDoneEl.type = 'checkbox';
         isDoneEl.checked = task.getIsDone();
         isDoneEl.addEventListener('change', async () => {
-            const response = await fetch(`/tasks/${task.getId()}`, {
+            const resp = await fetch(`/tasks/${task.getId()}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    title: task.getTitle(),
+                    title:        task.getTitle(),
                     due_datetime: task.getDueDateTime(),
-                    priority: task.getPriority(),
-                    tag: task.getTag(),
-                    is_done: isDoneEl.checked ? 1 : 0
+                    priority:     task.getPriority(),
+                    tag:          task.getTag(),
+                    is_done:      isDoneEl.checked ? 1 : 0,
+                    list_id:      task.list_id ?? (window.activeListId === 'personal' ? null : parseInt(window.activeListId))
                 })
             });
-            if ( !response.ok ) {
-                console.error('Failed to update done status:', response.status);
-                isDoneEl.checked = !isDoneEl.checked;   // reverts the checkbox visually
-            } else {
+
+            if ( !resp.ok ) {
+                isDoneEl.checked = !isDoneEl.checked;
+            }
+
+            else {
                 li.classList.toggle('done', isDoneEl.checked);
             }
+
+
         });
         li.appendChild(isDoneEl);
 
@@ -74,48 +86,38 @@ document.addEventListener('DOMContentLoaded', async function () {
         const editEl = document.createElement('button');
         editEl.textContent = "Edit Task";
         editEl.addEventListener('click', () => {
-            document.getElementById('form-header').textContent = "Edit Task";
-
-            document.getElementById('task-name').value = task.getTitle();
-            document.getElementById('due-date-time').value = task.getDueDateTime();
-            document.getElementById('priority-select').value = task.getPriority();
-            document.getElementById('tag').value = task.getTag();
-            
+            document.getElementById('form-header').textContent  = "Edit Task";
+            document.getElementById('task-name').value          = task.getTitle();
+            document.getElementById('due-date-time').value      = task.getDueDateTime();
+            document.getElementById('priority-select').value    = task.getPriority();
+            document.getElementById('tag').value                = task.getTag();
+        
             const form = document.getElementById('task-form');
-            form.dataset.editingId     = task.getId();
+            form.dataset.editingId = task.getId();
             form.dataset.editingIsDone = task.getIsDone();
-            
             document.getElementById('submit-btn').textContent = "Update Task";
-
-            // targets the same (+) toggle button
             document.getElementById('task-form-section').classList.remove('hidden');
-            
-
         });
         editEl.classList.add('edit-task-btn');
         li.appendChild(editEl);
 
-
         const deleteEl = document.createElement('button');
         deleteEl.textContent = "X";
         deleteEl.addEventListener('click', async () => {
-            console.log('Delete Task button clicked.');
-            
-            if ( confirm(`Delete task ${task.getTitle()}?`) ) {
-                const response = await fetch(`/tasks/${task.getId()}`, {method: 'DELETE',});
-                if ( response.ok ) {
-                    li.remove()
-                } else {
-                    console.error('Failed to delete task:', response.status);
+            if (confirm(`Delete task ${task.getTitle()}?`)) {
+                const resp = await fetch(`/tasks/${task.getId()}`, { method: 'DELETE' });
+                if (resp.ok) {
+                    li.remove();
                 }
             }
         });
         deleteEl.classList.add('delete-task-btn');
         li.appendChild(deleteEl);
 
-        // append to `container` container
         container.appendChild(li);
-    }); 
+    });
+};
 
-    
+document.addEventListener('DOMContentLoaded', () => {
+    window.loadTasksForActiveList();
 });
