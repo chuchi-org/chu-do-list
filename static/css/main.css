@@ -326,15 +326,32 @@ main.container {
 .sidebar-footer {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 1rem;
     padding-top: 1rem;
     border-top: 1px solid rgba(0, 0, 0, 0.15);
 }
 
 .sidebar-link {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: rgba(0, 0, 0, 0.15);
     color: var(--BLACK-TEXT);
     text-decoration: none;
     font-size: 0.95rem;
+    padding: 1rem 0;
+}
+
+.sidebar-link::after {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid #1a1a1a;
+    border-bottom: 2px solid #1a1a1a;
+    transform: rotate(-45deg); /* Forms the '>' shape */
+    margin-right: 4px; /* Keeps it slightly away from the absolute edge */
+    transition: transform 0.15s ease;
 }
 
 .sidebar-link:hover {
@@ -473,6 +490,7 @@ main.container {
 
 #sort-task-list {
     padding: 0.3rem 0.5rem;
+    margin: 0.5rem;
     border: 1px solid var(--BLACK);
     border-radius: 6px;
     background-color: var(--BACKGROUND, #fff);
