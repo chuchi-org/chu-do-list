@@ -59,7 +59,10 @@
             <div class="add-task-card">
                 <!-- title + add task btn -->
                 <header class="app-header">
-                    <h1>Chu-Do List</h1>
+                    <div class="header-left">
+                        <button id="toggle-sidebar-btn" class="icon-btn" title="Open Lists Menu">☰</button>
+                        <h1 id="active-list-title">Personal Tasks</h1>
+                    </div>
                     <button id="add-task-btn" type="button">+</button>
                 </header>
                 
@@ -123,9 +126,9 @@
                         <div id="task-list-sort-container" class="sort-filter-elem">
                             <label for="sort-task-list" id="sort-label">Sort by:</label>
                             <select name="" id="sort-task-list">
-                                <option value="">Priority</option>
-                                <option value="">Due Date</option>
-                                <option value="">Date Added</option>
+                                <option value="priority">Priority</option>
+                                <option value="due-date">Due Date</option>
+                                <option value="date-added">Date Added</option>
                             </select>
                         </div>
                         
@@ -142,7 +145,6 @@
                 </ul>
             </section>
 
-            <a href="{{ url_for('login') }}">Go to Login</a>
         </main>
 
 
@@ -150,7 +152,7 @@
             <div class="modal-card">
                 <div class="modal-header">
                     <h2>Create New List</h2>
-                    <button id="close-list-modal-btn"></button>
+                    <button id="close-list-modal-btn">&times;</button>
                 </div>
 
                 <form id="create-list-form">
@@ -168,8 +170,10 @@
         </footer>
         
         <!-- JS scripts -->
-        <script src = "{{ url_for('static', filename='js/task.js') }}"></script>
-        <script src = "{{ url_for('static', filename='js/tasksRender.js') }}"></script>
-        <script src = "{{ url_for('static', filename='js/ui.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/task.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/tasksRender.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/collab.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
     </body>
 </html>

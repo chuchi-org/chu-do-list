@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const openListModalBtn  = document.getElementById('open-create-list-modal-btn');
     const closeListModalBtn = document.getElementById('close-list-modal-btn');
-    const createListModal   = document.getElementById('create-list-model');
+    const createListModal   = document.getElementById('create-list-modal');
     const createListForm    = document.getElementById('create-list-form');
     const logoutBtn         = document.getElementById('logout-btn');
 
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     toggleSidebarBtn.addEventListener('click', openSidebar);
-    closeSidebarBtn.addEventListener('click', closeSidebar);
+    closeSideBarBtn.addEventListener('click', closeSidebar);
     sidebarOverlay.addEventListener('click', closeSidebar);
 
     // logout handler
@@ -79,10 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
     createListForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const listNameInput = document.getElementById('new-list-name');
-        const listName      = listNameInput.ariaValueMax.trim();
+        const listName      = listNameInput.value.trim();
         const errorEl       = document.getElementById('create-list-error');
 
-        const response = await fetch('/list', {
+        const response = await fetch('/lists', {
             method:    'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: listName })
