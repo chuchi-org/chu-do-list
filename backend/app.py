@@ -18,6 +18,36 @@ DB_PATH = Path(__file__).parent / "tasks.db"
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
 app.secret_key = os.environ["SECRET_KEY"]
 
+# -- HELPER FUNCTIONS -- #
+
+# helper function to enable foreign key in each connection
+def get_connection():
+    connection = sqlite3.connect(DB_PATH)
+    connection.execute("PRAGMA foreign_keys = ON;")
+    return connection
+
+def user_can_access_list(cursor, user_id, list_id):
+    cursor.execute(
+        "SELECT 1 FROM list_members WHERE list_id = ? AND user_id = ?",
+        (list_id, user_id)
+    )
+    return cursor.fetchone() is not None
+
+def get_accessible_task(cursor, user_id, task_id):
+    cursor.execute(
+        """SELECT tasks.id
+            FROM tasks
+            LEFT JOIN list_members
+                ON list_members.list_id = tasks.list_id
+                AND list_members.user_id = :user_id
+            WHERE tasks.id = :task_id
+                AND (
+                    (tasks.is_personal = 1 AND tasks.user_id = :user_id)
+                    OR (tasks.is_personal = 0 AND list_members.user_id IS NOT NULL)
+                )""",
+        {"user_id": user_id, "task_id": task_id}
+    )
+    return cursor.fetchone()
 
 @app.route("/")
 def index():
@@ -56,7 +86,7 @@ def forget_password():
     if not email:
         return jsonify({"error": "Email is required"}), 400
     
-    connection = sqlite3.connect(DB_PATH)
+    connection = get_connection()
     cursor = connection.cursor()
 
     # look up user by email
@@ -103,7 +133,7 @@ def reset_password():
     if len(new_password) < 8:
         return jsonify({"error": "Password must be at least 8 characters long."}), 400
 
-    connection = sqlite3.connect(DB_PATH)
+    connection = get_connection()
     cursor = connection.cursor()
 
     cursor.execute("SELECT id, reset_token_expiry FROM users WHERE reset_token = ?", (token,))
@@ -128,12 +158,40 @@ def reset_password():
 @app.route("/tasks", methods=["GET"])
 # read
 def get_tasks():
-    # defining connection & cursor
-    connection  = sqlite3.connect(DB_PATH)  # opens connection to tasks.db
-    cursor      = connection.cursor()       # sends instructions / receives results via connection ^
+        # session check
+    # user_id always comes from session, not the request body
+    user_id = session.get("user_id")
+    if user_id is None:
+        return jsonify({"error": "Not logged in."}), 401
 
-    cursor.execute("SELECT * FROM tasks")   # instruction sent to DB
-    rows        = cursor.fetchall()
+    list_id = request.args.get("list_id", type=int)     # /tasks -> personal, /tasks?list_id=5 -> that list
+    
+    # defining connection & cursor
+    connection  = get_connection()  # opens connection to tasks.db
+    cursor      = connection.cursor()       # sends instructions / receives results via connection ^
+    
+    # accessing personal tasks
+    if list_id is None:
+        cursor.execute(
+            "SELECT id, title, due_datetime, priority, tag, is_done, created_at, list_id, is_personal "
+            "FROM tasks WHERE is_personal = 1 AND user_id = ?", (user_id,)
+        )
+    # accessing list tasks
+    else:
+        # foreign or nonexistent list id both get 404
+        # so user probing id's can't tell which exist
+        if not user_can_access_list(cursor, user_id, list_id):
+            cursor.close()
+            connection.close()
+            return jsonify({"error": "List not found."}), 404
+
+        # if list exists, access its corresponding tasks
+        cursor.execute(
+            "SELECT id, title, due_datetime, priority, tag, is_done, created_at, list_id, is_personal "
+            "FROM tasks WHERE list-id = ?", (list_id,)
+        )
+            
+    rows        = cursor.fetchall() 
 
     cursor.close()          # closes the opened Cursor
     connection.close()      # terminates the active link between Py script and SQLite DB
@@ -148,21 +206,43 @@ def get_tasks():
             "priority": row[3],
             "tag": row[4],
             "is_done": row[5],
-            "created_at":row[6]
+            "created_at":row[6],
+            "list_id": row[7],
+            "is_personal": row[8]
         })
     return jsonify(tasks)   # converts data into a JSON string and sends it as response to caller
+
 
 # create
 @app.route("/tasks", methods=["POST"])
 def create_task():
-    data = request.get_json()   # reads request body (JSON) from frontend and parses it into dict
-
-    connection  = sqlite3.connect(DB_PATH)  
-    cursor      = connection.cursor()      
+    # session check
+    # user_id always comes from session, not the request body
+    user_id = session.get("user_id")
+    if user_id is None:
+        return jsonify({"error": "Not logged in."}), 401
     
+    data    = request.get_json()   # reads request body (JSON) from frontend and parses it into dict
+    list_id = data.get("list_id")
+
+    connection  = get_connection()
+    cursor      = connection.cursor()
+
+    if list_id is None:
+        is_personal = 1
+    else:
+        # foreign or nonexistent list id both get 404
+        # so user probing id's can't tell which exist
+        if not user_can_access_list(cursor, user_id, list_id):
+            cursor.close()
+            return jsonify({"error": "List not found."}), 404
+
+        is_personal = 0
+
     cursor.execute(
-    "INSERT INTO tasks (title, due_datetime, priority, tag, is_done, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-    (data["title"], data["due_datetime"], data["priority"], data["tag"], 0, data["created_at"])
+        "INSERT INTO tasks (title, due_datetime, priority, tag, is_done, created_at, user_id, list_id, is_personal) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        (data["title"], data["due_datetime"], data["priority"], data["tag"], 0, data["created_at"], user_id, list_id, is_personal)
     )   # '?' are placeholder values for the actual values inside the tuple, used to avoid SQL injection
 
     connection.commit()     # permanently saves all the pending changes made during the current transaction to the database file
@@ -170,16 +250,34 @@ def create_task():
     cursor.close()          
     connection.close()      
 
-    return jsonify({"id": new_id, **data, "is_done": 0}), 201   # 201 sets HTTP status to 201 Created
+    return jsonify({
+        "id": new_id, "title": data["title"], "due_datetime": data["due_datetime"],
+        "priority": data["priority"], "tag": data["tag"], "is_done": 0,
+        "created_at": data["created_at"], "list_id": list_id, "is_personal": is_personal
+    }), 201
+
 
 # update
 @app.route("/tasks/<int:task_id>", methods=["PUT"])      # <int:task_id> gets number from URL and passes it to function as task_id with type int
 def update_task(task_id):
+    # session check
+    # user_id always comes from session, not the request body
+    user_id = session.get("user_id")
+    if user_id is None:
+        return jsonify({"error": "Not logged in."}), 401
+    
     data = request.get_json()   # parses updated values given by frontend from a JSON body into a dict
 
-    connection = sqlite3.connect(DB_PATH)
+    connection = get_connection()
     cursor = connection.cursor()
 
+    # foreign or nonexistent task id both get 404
+    # so user probing id's can't tell which exist
+    if get_accessible_task(cursor, user_id, task_id) is None:
+        cursor.close()
+        connection.close()
+        return jsonify({"error": "Task not found."}), 404
+    
     cursor.execute(
     "UPDATE tasks SET title=?, due_datetime=?, priority=?, tag=?, is_done=?  WHERE id=?",
     (data["title"], data["due_datetime"], data["priority"], data["tag"], data["is_done"], task_id)
@@ -191,11 +289,26 @@ def update_task(task_id):
 
     return jsonify({"status": "updated", "id": task_id})
 
+
 # delete
 @app.route("/tasks/<int:task_id>", methods=["DELETE"])
 def delete_task(task_id):
-    connection  = sqlite3.connect(DB_PATH)
+    # session check
+    # user_id always comes from session, not the request body
+    user_id = session.get("user_id")
+    if user_id is None:
+        return jsonify({"error": "Not logged in."}), 401
+    
+    connection  = get_connection()
     cursor      = connection.cursor()
+
+    # foreign or nonexistent task id both get 404
+    # so user probing id's can't tell which exist
+    if get_accessible_task(cursor, user_id, task_id) is None:
+            cursor.close()
+            connection.close()
+            return jsonify({"error": "Task not found."}), 404
+
     cursor.execute("DELETE FROM tasks WHERE id=?", (task_id,))
     connection.commit()
     cursor.close()
@@ -229,7 +342,7 @@ def signup():
     if len(password) < 8:
         return jsonify({"error": "Your password must be at least 8 characters long."}), 400
 
-    connection  = sqlite3.connect(DB_PATH)
+    connection  = get_connection()
     cursor      = connection.cursor()
 
     # check if account already exists
@@ -264,7 +377,7 @@ def authenticate(): # login() already exists above
     email    = data.get("email", "").strip()
     password = data.get("password", "")
 
-    connection = sqlite3.connect(DB_PATH)
+    connection = get_connection()
     cursor = connection.cursor()
 
     cursor.execute("SELECT id, password_hash, display_name FROM users WHERE email = ?", (email,))
@@ -295,7 +408,7 @@ def get_profile():
     if user_id is None:
         return redirect("/login")
 
-    connection  = sqlite3.connect(DB_PATH)
+    connection  = get_connection()
     cursor      = connection.cursor()
     cursor.execute("SELECT display_name, email FROM users WHERE id=?", (user_id,))
     row         =  cursor.fetchone()
@@ -321,7 +434,7 @@ def update_profile():
 
     data = request.get_json()       # parse the incoming payload into a dict
 
-    connection  = sqlite3.connect(DB_PATH)
+    connection  = get_connection()
     cursor      = connection.cursor()
 
     # fetch all current values before any change can be done by the user
@@ -384,13 +497,6 @@ def update_profile():
     return jsonify({"display_name": display_name, "email": email}), 200
 
 # === NEW TABLE CREATION FOR LAB 3 === #
-    
-# enable foreign keys for all connections
-def get_connection():
-    connection = sqlite3.connect(DB_PATH)
-    connection.execute("PRAGMA foreign_keys = ON;")
-    return connection
-
 def init_db():
     connection = get_connection()
     cursor      = connection.cursor()
