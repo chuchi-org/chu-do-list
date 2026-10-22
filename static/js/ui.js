@@ -28,7 +28,8 @@ document.addEventListener('DOMContentLoaded',function () {
             due_datetime: document.getElementById('due-date-time').value,
             priority: document.getElementById('priority-select').value,
             tag: document.getElementById('tag').value,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
+            list_id: window.activeListId === 'personal' ? null : parseInt(window.activeListId)
         };
 
         const editingId = form.dataset.editingId;
@@ -60,7 +61,9 @@ document.addEventListener('DOMContentLoaded',function () {
             delete form.dataset.editingId;
             delete form.dataset.editingIsDone;
             document.getElementById('submit-btn').textContent = "Add Task";
-            location.reload();  // reload page to render fetched data
+            form.reset();
+            formSection.classList.add('hidden');
+            window.loadTasksForActiveList();
         } else {
             console.error('Failed to create task:', response.status);
         }
