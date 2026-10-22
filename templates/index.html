@@ -7,7 +7,53 @@
         <title>Chu-Do List</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     </head>
+
     <body>
+        <!-- overlay backdrop for sidebar -->
+        <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+        <!-- sliding sidebar nav -->
+        <aside id="sidebar" class="sidebar hidden">
+
+            <div class="sidebar-header">
+                <h2>Lists</h2>
+                <button id="close-sidebar-btn" class="icon-btn">
+                    &times;
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <!-- personal tasks -->
+                <div class="nav-section">
+                    <button id="nav-personal-btn" class="nav-item active" data-list-id="personal">
+                        Personal Tasks
+                    </button>
+                </div>
+
+                <hr class="nav-divider">
+
+                <!-- collaborative lists category -->
+                <div class="nav-section">
+                    <div class="section-title-row">
+                        <span class="section-title">Collaborative Lists</span>
+                        <button id="open-create-list-modal-btn" class="add-list-btn" title="Create New List">+</button>
+                    </div>
+
+                    <ul id="collab-lists-nav" class="collab-lists-list">
+                        <!-- contents rendered via JS injection -->
+                    </ul>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="{{ url_for('get_profile') }}" class="sidebar-link">Profile Settings</a>
+                <button id="logout-btn" class="logout-btn">Log Out</button>
+            </div>
+        </aside>
+
+
+
+        <!-- main page container -->
         <main class="container">
             <!-- header + task creation card -->
             <div class="add-task-card">
@@ -17,7 +63,20 @@
                     <button id="add-task-btn" type="button">+</button>
                 </header>
                 
+
+                <!-- collaboration controls (visible only when a collab list selected) -->
+                <!----------------------------------------------------------------------->
+                <div id="collab-header-controls" class="collab-controls-bar hidden">
+                    <div class="add-member-inline">
+                        <input type="email" id="member-email-input" placeholder="Add collaborator by email...">
+                        <button id="add-member-btn" type="submit">Add</button>
+                    </div>
+                    <p id="member-feedback" class="form-feedback hidden"></p>
+                </div>
+                
+                
                 <!-- task creation section -->
+                <!-------------------------------------------------------------->
                 <section class="task-form-section hidden" id="task-form-section">
                     <hr class="section-divider">
                     <div class="task-form-header">
@@ -85,6 +144,24 @@
 
             <a href="{{ url_for('login') }}">Go to Login</a>
         </main>
+
+
+        <div id="create-list-modal" class="modal-backdrop hidden">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h2>Create New List</h2>
+                    <button id="close-list-modal-btn"></button>
+                </div>
+
+                <form id="create-list-form">
+                    <p>List Title</p>
+                    <input type="text" id="new-list-name" placeholder="e.g. Group Project" required>
+                    <p id="create-list-error" class="form-error hidden"></p>
+                    <button type="submit" class="submit-modal-btn">Create List</button>
+                </form>
+            </div>
+        </div>
+
         
         <footer>
             © 2026 chuhchi-org
