@@ -53,7 +53,14 @@ A live email-delivery service (e.g. SMTP, SendGrid) was intentionally omitted fo
 **Limitation:** since no real email is sent, this flow is not suitable for production use as-is — a real deployment would replace the console `print()` with an actual transactional email call (e.g. via SMTP or a service like SendGrid), with the token delivered only to the account owner's actual inbox rather than visible to whoever has terminal/log access.
 
 ## Merging Branches
-[ Insert answer for #1 here]
+Activity 1 (CRUD focus activity) and Activity 2 (account features activity) were merged to the Activity 3 branch. We build our branching strategy by taking advantage of the feature when a local branch is initialized, it inherits the contents of the current snapshot of the local repository. Act 1 and Act 2 were naturally and cumulatively merged during the build process of the To-Do list project up until Act 3.
+
+Code-wise, merging Act 1 and Act 2 required some changes:
+1. We updated the `tasks` table from Act 1 to include `user_id` for the multiple accounts implementation of Act 2.
+
+2. For the backend, we refactored Act 1's task endpoints so fetching or modifying task globally will no longer be possible. This was done by authenticating `user_id` from the secure session.
+
+3. By Act 3 implementation, we improved the backend validation to ensure queries strictly filter by ownership (preventing users from accessing or modyfying other accounts' data).
 
 ## Database Design
 
