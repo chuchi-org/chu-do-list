@@ -288,6 +288,16 @@ main.container {
     gap: 0.25rem;
 }
 
+#close-list-modal-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--BLACK-TEXT);
+    padding: 0;
+    line-height: 1;
+}
+
 .nav-item {
     width: 100%;
     text-align: left;
@@ -437,6 +447,57 @@ main.container {
     text-align: left;
     flex: 1;
     min-width: 0;
+}
+
+/* sort and filter controls */
+#task-list-section-header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+#task-list-section-header-container h2 {
+    font-size: 1.4rem;
+    margin: 0;
+}
+
+#task-list-sort-filter-container {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+}
+
+#sort-task-list {
+    padding: 0.3rem 0.5rem;
+    border: 1px solid var(--BLACK);
+    border-radius: 6px;
+    background-color: var(--BACKGROUND, #fff);
+    font-family: var(--TEXT-FONT);
+}
+
+#task-list-filter-container {
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    padding: 0.2rem 0.6rem;
+    display: flex;
+    gap: 0.75rem;
+}
+
+#task-list-filter-container legend {
+    font-size: 0.8rem;
+    color: #666;
+    padding: 0 0.2rem;
+}
+
+#task-list-filter-container label {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
 }
 
 /* priority color-coding via data attribute */
