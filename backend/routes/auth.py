@@ -7,7 +7,7 @@ import secrets
 from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, request, render_template, session, redirect
 from werkzeug.security import generate_password_hash, check_password_hash
-from db import get_connection
+from db import get_db
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -37,30 +37,25 @@ def signup():
     if len(password) < 8:
         return jsonify({"error": "Your password must be at least 8 characters long."}), 400
 
-    connection  = get_connection()
-    cursor      = connection.cursor()
+    with get_db() as connection:
+        cursor = connection.cursor()
 
-    # check if account already exists
-    cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
-    if cursor.fetchone() is not None:
-        cursor.close()
-        connection.close()
-        return jsonify({"error": "An account with this email already exists."}), 409    # 409 - request conflict
+        # check if account already exists
+        cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+        if cursor.fetchone() is not None:
+            return jsonify({"error": "An account with this email already exists."}), 409    # 409 - request conflict
 
-    # hashing password for security
-    # generate_password_hash also adds a salt to differentiate two users with identical passwords
-    password_hash   = generate_password_hash(password)
+        # hashing password for security
+        # generate_password_hash also adds a salt to differentiate two users with identical passwords
+        password_hash   = generate_password_hash(password)
 
-    # store into db
-    cursor.execute(
-        "INSERT INTO users (display_name, email, password_hash) VALUES (?, ?, ?)",
-        (display_name, email, password_hash)
-    )
-    
-    connection.commit()
-    new_id = cursor.lastrowid  # grabs the auto-generated id of the row just inserted
-    cursor.close()
-    connection.close()
+        # store into db
+        cursor.execute(
+            "INSERT INTO users (display_name, email, password_hash) VALUES (?, ?, ?)",
+            (display_name, email, password_hash)
+        )
+
+        new_id = cursor.lastrowid  # grabs the auto-generated id of the row just inserted
 
     return jsonify({"id": new_id, "display_name": display_name, "email": email}), 201   # 201 = sign up successful
 
@@ -84,14 +79,10 @@ def authenticate(): # login() already exists above
     email    = data.get("email", "").strip()
     password = data.get("password", "")
 
-    connection = get_connection()
-    cursor = connection.cursor()
-
-    cursor.execute("SELECT id, password_hash, display_name FROM users WHERE email = ?", (email,))
-    user = cursor.fetchone()
-
-    cursor.close()
-    connection.close()
+    with get_db() as connection:
+        cursor = connection.cursor()
+        cursor.execute("SELECT id, password_hash, display_name FROM users WHERE email = ?", (email,))
+        user = cursor.fetchone()
 
     if user is None:
         return jsonify({"error": "Wrong email or password"}), 401 # 401 = unathorized
@@ -124,30 +115,26 @@ def forget_password():
 
     if not email:
         return jsonify({"error": "Email is required"}), 400
-    
-    connection = get_connection()
-    cursor = connection.cursor()
 
-    # look up user by email
-    cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
-    user = cursor.fetchone()
+    with get_db() as connection:
+        cursor = connection.cursor()
+        
+        # look up user by email
+        cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+        user = cursor.fetchone()
 
-    if user is not None:
-        # if user exists:
-        # generate secure token and expiry time
-        user_id = user[0]
-        token = secrets.token_urlsafe(32)
-        print(f"[DEMO] Reset code for {email}: {token}")
-        expiry= (datetime.now() + timedelta(minutes=5)).isoformat()
+        if user is not None:
+            # if user exists:
+            # generate secure token and expiry time
+            user_id = user[0]
+            token = secrets.token_urlsafe(32)
+            print(f"[DEMO] Reset code for {email}: {token}")
+            expiry= (datetime.now() + timedelta(minutes=5)).isoformat()
 
-        # update the user's row with token & expiry
-        cursor.execute("UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE id = ?",
-                        (token, expiry, user_id)
-        )
-        connection.commit()
-    
-    cursor.close()
-    connection.close()
+            # update the user's row with token & expiry
+            cursor.execute("UPDATE users SET reset_token = ?, reset_token_expiry = ? WHERE id = ?",
+                            (token, expiry, user_id)
+            )
 
     return jsonify({
         "status": "If that email is registered, a reset code has been generated.",
@@ -171,23 +158,17 @@ def reset_password():
     if len(new_password) < 8:
         return jsonify({"error": "Password must be at least 8 characters long."}), 400
 
-    connection = get_connection()
-    cursor = connection.cursor()
+    with get_db() as connection:
+        cursor = connection.cursor()
+    
+        cursor.execute("SELECT id, reset_token_expiry FROM users WHERE reset_token = ?", (token,))
+        user = cursor.fetchone()
 
-    cursor.execute("SELECT id, reset_token_expiry FROM users WHERE reset_token = ?", (token,))
-    user = cursor.fetchone()
+        if user is None or (datetime.fromisoformat(user[1]) < datetime.now()):
+            return jsonify({"error": "Invalid or expired reset code."}), 400
 
-    if user is None or (datetime.fromisoformat(user[1]) < datetime.now()):
-        cursor.close()
-        connection.close()
-        return jsonify({"error": "Invalid or expired reset code."}), 400
+        password_hash = generate_password_hash(new_password)
 
-    password_hash = generate_password_hash(new_password)
-
-    cursor.execute("UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL WHERE id = ?", (password_hash, user[0]))
-
-    connection.commit()
-    cursor.close()
-    connection.close()
+        cursor.execute("UPDATE users SET password_hash = ?, reset_token = NULL, reset_token_expiry = NULL WHERE id = ?", (password_hash, user[0]))
 
     return jsonify({"status": "password_reset"}), 200
