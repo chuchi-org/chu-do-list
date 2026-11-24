@@ -4,18 +4,16 @@
 
 from flask import Blueprint, jsonify, request, session
 from db import get_connection
-from access import user_can_access_list, get_accessible_task
+from access import user_can_access_list, get_accessible_task, login_required
 
 tasks_bp = Blueprint("tasks", __name__)
 
 # ----- TASK ROUTES -----
 @tasks_bp.route("/tasks", methods=["GET"])
+@login_required
 def get_tasks():
-    # session check
     # user_id always comes from session, not the request body
-    user_id = session.get("user_id")
-    if user_id is None:
-        return jsonify({"error": "Not logged in."}), 401
+    user_id = session["user_id"]
 
     list_id = request.args.get("list_id", type=int)     # /tasks -> personal, /tasks?list_id=5 -> that list
     
@@ -66,12 +64,10 @@ def get_tasks():
     return jsonify(tasks)   # converts data into a JSON string and sends it as response to caller
 
 @tasks_bp.route("/tasks", methods=["POST"])
+@login_required
 def create_task():
-    # session check
     # user_id always comes from session, not the request body
-    user_id = session.get("user_id")
-    if user_id is None:
-        return jsonify({"error": "Not logged in."}), 401
+    user_id = session["user_id"]
     
     data    = request.get_json()   # reads request body (JSON) from frontend and parses it into dict
     list_id = data.get("list_id")
@@ -109,12 +105,10 @@ def create_task():
     }), 201
 
 @tasks_bp.route("/tasks/<int:task_id>", methods=["PUT"])
+@login_required
 def update_task(task_id):
-    # session check
     # user_id always comes from session, not the request body
-    user_id = session.get("user_id")
-    if user_id is None:
-        return jsonify({"error": "Not logged in."}), 401
+    user_id = session["user_id"]
     
     data = request.get_json()   # parses updated values given by frontend from a JSON body into a dict
 
@@ -140,12 +134,10 @@ def update_task(task_id):
     return jsonify({"status": "updated", "id": task_id})
 
 @tasks_bp.route("/tasks/<int:task_id>", methods=["DELETE"])
+@login_required
 def delete_task(task_id):
-    # session check
     # user_id always comes from session, not the request body
-    user_id = session.get("user_id")
-    if user_id is None:
-        return jsonify({"error": "Not logged in."}), 401
+    user_id = session["user_id"]
     
     connection  = get_connection()
     cursor      = connection.cursor()

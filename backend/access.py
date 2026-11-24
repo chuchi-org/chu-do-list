@@ -2,6 +2,17 @@
 #   access.py - ownership helpers
 # ---------------------------------------------
 
+from functools import wraps
+from flask import session, jsonify
+
+def login_required(view):
+    @wraps(view)    # keeps original function's name
+    def wrapped(*args, **kwargs):
+        if session.get("user_id") is None:
+            return jsonify({"error": "Not logged in."}), 401
+        return view(*args, **kwargs)
+    return wrapped
+
 def user_can_access_list(cursor, user_id, list_id):
     cursor.execute(
         "SELECT 1 FROM list_members WHERE list_id = ? AND user_id = ?",

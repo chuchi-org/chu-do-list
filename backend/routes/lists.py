@@ -6,15 +6,16 @@
 import sqlite3
 from flask import Blueprint, jsonify, request, session
 from db import get_connection
+from access import login_required
 
 lists_bp = Blueprint("lists", __name__)
 
 # ----- LIST ROUTES -----
 @lists_bp.route("/lists", methods=["GET"])
+@login_required
 def get_lists():
-    user_id = session.get("user_id")
-    if user_id is None:
-        return jsonify({"error": "Not logged in."}), 401
+    # user_id always comes from session, not the request body
+    user_id = session["user_id"]    
 
     connection = get_connection()
     cursor = connection.cursor()
@@ -34,10 +35,10 @@ def get_lists():
     return jsonify(lists), 200
 
 @lists_bp.route("/lists", methods=["POST"])
+@login_required
 def create_list():
-    user_id = session.get("user_id")
-    if user_id is None:
-        return jsonify({"error": "Not logged in."}), 401
+    # user_id always comes from session, not the request body
+    user_id = session["user_id"]
 
     data = request.get_json()
     name = data.get("name", "").strip()
@@ -57,10 +58,10 @@ def create_list():
 
 
 @lists_bp.route("/lists/<int:list_id>/members", methods=["POST"])
+@login_required
 def add_list_member(list_id):
-    user_id = session.get("user_id")
-    if user_id is None:
-        return jsonify({"error": "Not logged in."}), 401
+    # user_id always comes from session, not the request body
+    user_id = session["user_id"]
 
     data = request.get_json()
     email = data.get("email", "").strip()

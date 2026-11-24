@@ -5,7 +5,8 @@
 from flask import Blueprint, jsonify, request, render_template, session, redirect
 from werkzeug.security import generate_password_hash
 from db import get_connection
-from routes.auth import EMAIL_REGEX
+from auth import EMAIL_REGEX
+from access import login_required
 
 profile_bp = Blueprint("profile", __name__)
 
@@ -33,11 +34,10 @@ def get_profile():
 
 # update
 @profile_bp.route("/profile", methods=["PUT"])
+@login_required
 def update_profile():
-    # only accept user_id from the session, not anywhere else
-    user_id = session.get("user_id")
-    if user_id is None:
-        return jsonify({"error": "Not logged in."}), 401    # 401 - Unauthorized
+    # user_id always comes from session, not the request body
+    user_id = session["user_id"]
 
     data = request.get_json()       # parse the incoming payload into a dict
 
