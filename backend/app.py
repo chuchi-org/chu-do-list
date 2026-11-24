@@ -1,53 +1,21 @@
 # FILENAME: app.py
 from flask import Flask,jsonify, request, render_template, session, redirect
 import sqlite3
-from pathlib import Path
 import re
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from dotenv import load_dotenv
 import secrets
 from datetime import datetime, timedelta
+from db import get_connection, init_db
+from access import user_can_access_list, get_accessible_task
+
 
 load_dotenv()   # reads .env into os.environ
                 # must run always before code below
 
-# dynamically creates an absolute file path to tasks.db located in the same folder of app.py
-# __file__ : Python's built-in reference to the current script's path
-DB_PATH = Path(__file__).parent / "tasks.db"
 app = Flask(__name__, template_folder="../templates", static_folder="../static")
 app.secret_key = os.environ["SECRET_KEY"]
-
-# -- HELPER FUNCTIONS -- #
-
-# helper function to enable foreign key in each connection
-def get_connection():
-    connection = sqlite3.connect(DB_PATH)
-    connection.execute("PRAGMA foreign_keys = ON;")
-    return connection
-
-def user_can_access_list(cursor, user_id, list_id):
-    cursor.execute(
-        "SELECT 1 FROM list_members WHERE list_id = ? AND user_id = ?",
-        (list_id, user_id)
-    )
-    return cursor.fetchone() is not None
-
-def get_accessible_task(cursor, user_id, task_id):
-    cursor.execute(
-        """SELECT tasks.id
-            FROM tasks
-            LEFT JOIN list_members
-                ON list_members.list_id = tasks.list_id
-                AND list_members.user_id = :user_id
-            WHERE tasks.id = :task_id
-                AND (
-                    (tasks.is_personal = 1 AND tasks.user_id = :user_id)
-                    OR (tasks.is_personal = 0 AND list_members.user_id IS NOT NULL)
-                )""",
-        {"user_id": user_id, "task_id": task_id}
-    )
-    return cursor.fetchone()
 
 @app.route("/")
 def index():
@@ -589,76 +557,6 @@ def add_list_member(list_id):
     cursor.close()
     connection.close()
     return jsonify({"status": "Member added.", "email": email}), 200
-    
-
-
-# === NEW TABLE CREATION FOR LAB 3 === #
-def init_db():
-    connection = get_connection()
-    cursor      = connection.cursor()
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-            display_name        TEXT,
-            email               TEXT UNIQUE,
-            password_hash       TEXT,
-            reset_token         TEXT,
-            reset_token_expiry  TEXT
-        )
-    """)
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS lists (
-        id          INTEGER PRIMARY KEY AUTOINCREMENT,
-        name        TEXT NOT NULL,
-        owner_id    INTEGER NOT NULL,
-        FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
-        )
-    """)
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS list_members (
-        list_id     INTEGER NOT NULL,
-        user_id     INTEGER NOT NULL,
-        role        TEXT DEFAULT 'collaborator',
-        PRIMARY KEY (list_id, user_id),
-        FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )
-    """)
-
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS tasks (
-            id              INTEGER PRIMARY KEY AUTOINCREMENT,
-            title           TEXT,
-            due_datetime    TEXT,
-            priority        INTEGER,
-            tag             TEXT,
-            is_done         INTEGER,
-            created_at      TEXT,
-            user_id         INTEGER NOT NULL,
-            is_personal     INTEGER NOT NULL DEFAULT 1 CHECK (is_personal IN (0, 1)),
-            list_id         INTEGER,
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-            FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE CASCADE,
-            CHECK ((is_personal = 1 AND list_id IS NULL)
-                    OR (is_personal = 0 AND list_id IS NOT NULL))
-        )
-    """)
-
-    # guard; check if machine still has the old database and prompts them to delete tasks.db
-    cursor.execute("PRAGMA table_info(tasks)")
-    task_columns = [c[1] for c in cursor.fetchall()]
-    cursor.execute("PRAGMA table_info(users)")
-    user_columns = [c[1] for c in cursor.fetchall()]
-    if"is_personal" not in task_columns or "reset_token" not in user_columns:
-        connection.close()
-        raise SystemExit("Old tasks.db detected. Delete tasks.db and restart app.py")
-
-    connection.commit()     # permanently saves all the pending changes made during the current transaction to the database file
-    cursor.close()          # closes the opened Cursor
-    connection.close()      # terminates the active link between Py script and SQLite DB
 
 if __name__ == "__main__":
     init_db()
