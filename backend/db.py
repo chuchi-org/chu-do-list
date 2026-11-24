@@ -4,6 +4,7 @@
 
 import sqlite3
 from pathlib import Path
+from contextlib import contextmanager
 
 # absolute path to tasks.db, located in the same folder as this file
 # __file__ : Python's built-in reference to the current script's path
@@ -14,6 +15,18 @@ def get_connection():
     connection = sqlite3.connect(DB_PATH)
     connection.execute("PRAGMA foreign_keys = ON;")
     return connection
+
+@contextmanager
+def get_db():
+    connection = get_connection()
+    try:
+        yield connection        # route's with block runs here
+        connection.commit()     # block finished fine -> save changes
+    except Exception:
+        connection.rollback()   # block crashed -> undo half-finished changes
+        raise                   # still let the error show up
+    finally:
+        connection.close()      # always runs, even on early return
 
 def init_db():
     connection = get_connection()
