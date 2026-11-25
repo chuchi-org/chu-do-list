@@ -1,21 +1,37 @@
 /* FILENAME: main.css */
 @import url(variables.css);
 
-* {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
 }
 
+html,
 body {
-    font-family: var(--TEXT-FONT);
-    max-width: 600px;
-    min-height: 100vh;
-    margin: 2rem auto;
-    padding: 2rem 1rem;
-    color: var(--BLACK-TEXT); 
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    background-color: var(--LIGHT-PINK);
+    overflow-x: hidden;
+}
+
+body {
+    font-family:        var(--TEXT-FONT);
+    min-height:         100vh;
+    width:              100%;
+    margin:             0;
+    padding:            1rem 0.75rem;
+    color:              var(--BLACK-TEXT); 
+    display:            flex;
+    flex-direction:     column;
+    justify-content:    space-between;
+    background-color:   var(--LIGHT-PINK);
+}
+
+@media (min-width: 600px) {
+    body {
+        width:      auto;
+        max-width:  600px;
+        margin:     2rem auto;
+        padding:    2rem 1rem;
+    }
 }
 
 main {
@@ -423,11 +439,10 @@ main.container {
 }
 
 #task-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.1);
-    border-radius: 12px;
+    list-style:     none;
+    padding:        0;
+    margin:         0;
+    border-radius:  12px;
 }
 
 
@@ -452,18 +467,141 @@ main.container {
 }
 
 .task-item {
+    position:         relative;
+    display:          flex;
+    flex-direction:   column;
+    justify-content:  space-between;
+    background-color: var(--BACKGROUND, #fff);
+    border:           1px solid rgba(0, 0, 0, 0.1);
+    border-radius:    10px;
+    padding:          0.85rem 0.9rem;
+    margin-bottom:    0.75rem;
+    box-shadow:       0 0.25rem 0.85rem rgba(0, 0, 0, 0.06);
+}
+
+.task-card-top {
+    display:         flex;
+    align-items:     flex-start;
+    justify-content: space-between;
+    gap:             0.6rem;
+}
+
+.task-check-wrap {
+    display:     flex;
+    align-items: flex-start;
+    gap:         0.6rem;
+    flex:        1 1 auto;
+    min-width:   0;
+    cursor:      pointer;
+}
+
+.task-checkbox {
+    flex-shrink: 0;
+    width:       1.15rem;
+    height:      1.15rem;
+    margin-top:  0.2rem;
+    cursor:      pointer;
+}
+
+.task-title-group {
     display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    gap: 0.6rem;
-    padding: 0.6rem 0.4rem;
-    border-bottom: 1px solid #eee;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem 0.5rem;
+    min-width: 0;
+    flex: 1 1 auto;
 }
 
 .task-title {
+    font-weight:    700;
+    font-size:      1rem;
+    line-height:    1.35;
+    overflow-wrap:  break-word;
+}
+
+.task-tag {
+    font-size: 0.82rem;
+    line-height: 1.3;
+    padding: 0.12rem 0.5rem;
+    border-radius: 999px;
+    background-color: rgba(0, 0, 0, 0.07);
+    color: var(--BLACK-TEXT);
+    white-space: nowrap;
+}
+
+.task-deadline-row {
+    margin-top:  1rem;
+    padding-top: 0.35rem;
+    border-top:  1px dashed rgba(0, 0, 0, 0.12);
+    font-size:   0.85rem;
+    color:     #555;
+}
+
+.task-menu-wrap {
+    position:    relative;
+    flex-shrink: 0;
+}
+
+.task-menu-btn {
+    background:     transparent;
+    border:         none;
+    border-radius:  6px;
+    font-size:      1.3rem;
+    line-height:    1;
+    padding:        0.2rem 0.45rem;
+    min-width:      36px;
+    min-height:     36px;
+    cursor:         pointer;
+    color:          var(--BLACK-TEXT);
+}
+
+.task-menu-btn:hover {
+    background-color: rgba(var(--LIGHT-PINK));
+}
+
+.task-menu-dropdown {
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    right: 0;
+    min-width: 135px;
+    background-color: var(--BACKGROUND, #fff);
+    border: 1px solid rgba(0, 0, 0, 0.14);
+    border-radius: 8px;
+    box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.14);
+    display: flex;
+    flex-direction: column;
+    z-index: 30;
+    overflow: hidden;
+}
+
+.task-menu-dropdown.hidden {
+    display: none;
+}
+
+.task-menu-item {
+    background: transparent;
+    border: none;
     text-align: left;
-    flex: 1;
-    min-width: 0;
+    padding: 0.6rem 0.8rem;
+    font-family: var(--TEXT-FONT);
+    font-size: 0.9rem;
+    cursor: pointer;
+    width: 100%;
+}
+
+.task-menu-item:hover {
+    background-color: rgba(0, 0, 0, 0.06);
+}
+
+.task-menu-item.delete-task-btn {
+    color: var(--RED);
+    background: transparent;
+    border-radius: 0;
+}
+
+.task-menu-item.edit-task-btn {
+    background: transparent;
+    border-radius: 0;
 }
 
 /* sort and filter controls */
@@ -518,42 +656,52 @@ main.container {
     cursor: pointer;
 }
 
-/* priority color-coding via data attribute */
-.task-item[data-priority="1"] { border-left: 4px solid var(--RED); }
-.task-item[data-priority="2"] { border-left: 4px solid var(--YELLOW); }
-.task-item[data-priority="3"] { border-left: 4px solid var(--BLUE); }
+/* default border color for task card */
+.task-item {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
 
-.task-item.done {
-    opacity: 30%;
+/* priority color-coding via data attribute */
+.task-item[data-priority="1"] { border: 3px solid var(--RED); }
+.task-item[data-priority="2"] { border: 3px solid var(--YELLOW); }
+.task-item[data-priority="3"] { border: 3px solid var(--BLUE); }
+
+.task-item.done .task-check-wrap,
+.task-item.done .task-deadline-row {
+    opacity: 0.45
+}
+
+.task-item.done .task-menu-wrap {
+    opacity: 1;
+}
+
+.edit-task-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 /* task item action buttons */
 .edit-task-btn,
 .delete-task-btn {
-    border: none;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    font-family: var(--TEXT-FONT);
-    font-size: 0.9rem;
-    padding: 0.4rem 0.75rem;
+    flex-shrink:    0;
+    border:         none;
+    border-radius:  0.5rem;
+    cursor:         pointer;
+    font-family:    var(--TEXT-FONT);
+    font-size:      0.9rem;
+    padding:        0.4rem 0.75rem;
 }
 
 .edit-task-btn {
-    background: var(--DARK-PINK);
     color: var(--BLACK);
-}
-
-.edit-task-btn:hover {
-    background: #f27395;
 }
 
 .delete-task-btn {
-    background: var(--RED-ACCENT);
     color: var(--BLACK);
 }
-
+.edit-task-btn:hover,
 .delete-task-btn:hover {
-    opacity: 0.85;
+    background: rgb(243, 231, 231);
 }
 
 .logout-btn {
