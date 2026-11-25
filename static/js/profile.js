@@ -21,6 +21,12 @@ document.addEventListener('DOMContentLoaded', function () {
         successEl.textContent = message;
         successEl.classList.remove('hidden');
     }
+    // clear old messages as soon as user edits a fiels
+    // stale "success" never sits next to a new, unsaved change
+    form.addEventListener('input', () => {
+        errorEl.classList.add('hidden');
+        successEl.classList.add('hidden');
+    });
 
     logoutBtn.addEventListener('click', async () => {
         try {
