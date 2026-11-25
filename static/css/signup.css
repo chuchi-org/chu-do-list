@@ -17,12 +17,15 @@ body {
     flex-direction: column;
     justify-content: space-between;
     background: var(--LIGHT-PINK);
+    min-height: 100vh;
+    min-height: 100dvh;
 }
 
 main {
     display: flex;
     flex-direction: column;
-    flex: 2;
+    justify-content: center;
+    flex: 1;
 }
 
 #center-div {
