@@ -87,9 +87,13 @@ def init_db():
     task_columns = [c[1] for c in cursor.fetchall()]
     cursor.execute("PRAGMA table_info(users)")
     user_columns = [c[1] for c in cursor.fetchall()]
-    if"is_personal" not in task_columns or "reset_token" not in user_columns:
+    if "is_personal" not in task_columns or "reset_token" not in user_columns:
         connection.close()
         raise SystemExit("Old tasks.db detected. Delete tasks.db and restart app.py")
+
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_tasks_user_id ON tasks(user_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_tasks_list_id ON tasks(list_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_list_members_user_id ON list_members(user_id)")
 
     connection.commit()     # permanently saves all the pending changes made during the current transaction to the database file
     cursor.close()          # closes the opened Cursor
