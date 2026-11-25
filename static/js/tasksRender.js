@@ -58,6 +58,11 @@ window.loadTasksForActiveList = async function() {
         setTaskListMessage('Could not reach the server. Please refresh and try again.', true);
         return;
     }
+}
+
+
+// +------- Sort + Filter -------------------+
+let currentListTasks = [];
 
     setTaskListMessage( data.length === 0 ? 'No tasks yet. Add one to get started.' : '' );
 
@@ -174,8 +179,6 @@ window.loadTasksForActiveList = async function() {
         deleteEl.classList.add('delete-task-btn');
         li.appendChild(deleteEl);
 
-        container.appendChild(li);
-    });
 };
 
 document.addEventListener('DOMContentLoaded', () => {
