@@ -95,7 +95,7 @@ main.container {
 
 .app-header h1 {
     font-family: var(--TITLE-FONT);
-    font-size: 2.75rem;
+    font-size: clamp(1.5rem, 5vw + 0.75rem, 2.75rem);
     margin: 0;
 }
 
@@ -310,7 +310,7 @@ button:disabled {
     font-size: 0.85rem;
     font-weight: bold;
     text-transform: uppercase;
-    color: #666;
+    color: #555;
 }
 
 .add-list-btn {
@@ -651,7 +651,7 @@ button:disabled {
 }
 
 #task-list-section-header-container h2 {
-    font-size: 1.4rem;
+    font-size: clamp(1.4rem, 4vw, 1.4rem);
     margin: 0;
 }
 
@@ -664,7 +664,7 @@ button:disabled {
 
 #sort-task-list {
     padding: 0.3rem 0.5rem;
-    margin: 0.5rem;
+    margin: 0 0 0 0.5rem;
     border: 1px solid var(--BLACK);
     border-radius: 6px;
     background-color: var(--BACKGROUND, #fff);
@@ -681,7 +681,7 @@ button:disabled {
 
 #task-list-filter-container legend {
     font-size: 0.8rem;
-    color: #666;
+    color: #555;
     padding: 0 0.2rem;
 }
 
@@ -704,7 +704,7 @@ button:disabled {
 
 .task-item.done .task-check-wrap,
 .task-item.done .task-deadline-row {
-    opacity: 0.45
+    opacity: 0.5;
 }
 
 .task-item.done .task-menu-wrap {
@@ -767,7 +767,7 @@ button:disabled {
 }
 
 .form-success {
-    color: var(--GREEN);
+    color: var(--GREEN-DARK);
     font-size: 0.9rem;
     margin: 0.25rem 0;
 }
@@ -776,4 +776,101 @@ footer {
     flex-shrink: 0;
     text-align: center;
     padding: 1.5rem 1rem;
+}
+
+/* sort and filter controls: wrap on narrow screens instead of overflowing */
+#task-list-sort-filter-container {
+    flex-wrap: wrap;        /* sort box and filter box stack when there's no room */
+    gap: 0.5rem 1.5rem;
+}
+
+#task-list-filter-container {
+    flex-wrap: wrap;        /* tag checkboxes continue on a second line */
+    min-width: 0;           /* fieldsets refuse to shrink by default; this lets them */
+    max-width: 100%;
+}
+
+/* sort dropdown: the closed box and the open choices share one size */
+#sort-task-list,
+#sort-task-list option {
+    font-size: 0.9rem;
+}
+
+/* ==================== PROFILE PAGE ==================== */
+#profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+#profile-form label {
+    font-size: 1rem;
+    margin-top: 0.4rem;
+}
+
+#profile-form input {
+    width: 100%;                  /* full width on phones */
+}
+
+.field-hint {
+    font-size: 0.85rem;
+    color: #555;                  /* 5.47:1 on --LIGHT-PINK */
+}
+
+#profile-submit-btn {
+    margin-top: 0.6rem;
+}
+
+.form-success.hidden {            /* only add this if the grep below finds no such rule */
+    display: none;
+}
+
+.app-header h1 {
+    overflow-wrap: anywhere;      /* a very long display name wraps instead of overflowing */
+    min-width: 0;
+}
+
+/* back link and log out sit in one row and share one look */
+.profile-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;               /* if a screen is very narrow, the second button wraps below */
+    margin-bottom: 1rem;
+}
+
+.back-chevron {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;                        /* space between the chevron and the label */
+    min-height: 44px;                   /* comfortable tap target */
+    padding: 0 0.75rem 0 0.5rem;
+    border-radius: 0.5rem;
+    color: var(--BLACK-TEXT);           /* 10.24:1 on --LIGHT-PINK */
+    font-size: 0.95rem;                 /* same size as the "Profile Settings" link */
+    text-decoration: none;
+}
+
+/* the sidebar chevron's drawing, turned the other way, now before the label */
+.back-chevron::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid #1a1a1a;
+    border-bottom: 2px solid #1a1a1a;
+    transform: rotate(135deg);          /* points left */
+    margin-left: 4px;                   /* optical nudge, since a rotated corner looks off-center */
+}
+
+.back-chevron:hover,
+.back-chevron:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 3px;      /* a little air between the text and the line */
+}
+
+.app-header .logout-btn {
+    flex-shrink: 0;                  /* keeps the button at full size */
+    white-space: nowrap;             /* "Log Out" never splits across two lines */
+    margin-left: 0.75rem;            /* space between the name and the button */
 }

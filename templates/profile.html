@@ -8,7 +8,12 @@
     </head>
     <body>
         <main class="container">
-            <div class="aqdd-task-card">
+            <div class="add-task-card">
+                
+                <div class="profile-actions">
+                    <a href="/"class="back-chevron">Back to tasks</a>
+                </div>
+                
                 <header class="app-header">
                     <h1>Hello, {{ display_name }}</h1>
                     <button id="logout-btn" class="logout-btn">Log Out</button>
@@ -19,19 +24,24 @@
                 <section id="edit-profile-section">
                     <h2>Edit Profile</h2>
                     <form id="profile-form">
-                        <p>Display Name</p>
-                        <input type="text" id="profile-display-name" value="{{ display_name }}">
-                        
-                        <p>Email</p>
-                        <input type="email" id="profile-email" value="{{ email }}">
+                        <label for="profile-display-name">Edit Profile</label>
+                        <input type="text" id="profile-display-name" value="{{ display_name }}" required
+                            placeholder="Jane Doe">
+                            
+                        <label for="profile-email">Email</label>
+                        <input type="email" id="profile-email" value="{{ email }}" required
+                            placeholder="sample@email.com">
 
-                        <p>New Password (leave blank if you want to keep your current password)</p>
-                        <input type="password" id="profile-password" minlength="8">
+                        <label for="profile-password">New Password</label>
+                        <input type="password" id="profile-password" minlength="8"
+                            autocomplete="new-password" aria-describedby="password-hint">
+                        <small id="password-hint" class="field-hint">
+                            Leave blank to keep your current password. At least 8 characters.
+                        </small>
 
-                        <p id="profile-error" class="form-error hidden"></p>
-                        <p id="profile-success" class="form-success hidden"></p>
+                        <p id="profile-error" class="form-error hidden" role="alert"></p>
+                        <p id="profile-success" class="form-success hidden" role="status"></p>
 
-                        <br>
                         <button type="submit" id="profile-submit-btn">Save Changes</button>
                     </form>
                 </section>

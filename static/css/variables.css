@@ -5,12 +5,14 @@
     --BLACK: #232d39ff;
     --BACKGROUND: #f1f9ff;
     --BTN-COLOR: #e9631a;
-    --DARK-PINK: #f78eaa;
+    --DARK-PINK: #e36b8b;
     --LIGHT-PINK: #eed8d5;
     --YELLOW: #f6c669;
     --RED: #b10e3f;
     --GREEN: #aaa860;
     --BLUE: #5192c4;
+    --BLACK-TEXT: #232d39;    
+    --GREEN-DARK: #4a5a1e;    /* readable green for text, 5.56:1 on --LIGHT-PINK */
     --TITLE-FONT: "Unkempt";
     --TEXT-FONT: "Inter Tight";
 }
