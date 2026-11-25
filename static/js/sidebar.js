@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const btn = document.createElement('button');
             btn.classList.add('nav-item');
             btn.dataset.listId = list.id;
-            btn.innerHTML = `${list.name}`;
+            btn.textContent = list.name;
     
             btn.addEventListener('click', () => setActiveList(list.id.toString(), list.name));
             li.appendChild(btn);
