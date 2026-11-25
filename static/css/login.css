@@ -60,10 +60,11 @@ main {
 }
 
 #forgot-password-link {
-    font-family: var(--TEXT-FONT);
-    color: var(--BLACK);
+    display: block;
+    text-align: right;
     font-size: 0.9rem;
-    text-decoration: underline;
+    margin-top: 0.5rem;
+    color: var(--BLACK-TEXT);
 }
 
 #sign-up-link {
@@ -174,4 +175,9 @@ sign-up-link:hover {
 
 #error-message.hidden {
     display: none;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
