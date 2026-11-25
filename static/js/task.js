@@ -71,6 +71,10 @@ class Task {
         this.tag = newTag;
     }
 
+    setIsDone(value) {
+        this.isDone = Boolean(value); // match whatever field getIsDone() returns
+    }
+
     // setters for isDone
     markDone() {
         this.isDone = true;
