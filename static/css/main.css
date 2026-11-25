@@ -95,7 +95,7 @@ main.container {
 
 .app-header h1 {
     font-family: var(--TITLE-FONT);
-    font-size: 2.75rem;
+    font-size: clamp(1.5rem, 5vw + 0.75rem, 2.75rem);
     margin: 0;
 }
 
@@ -379,7 +379,7 @@ button:disabled {
     font-size: 0.85rem;
     font-weight: bold;
     text-transform: uppercase;
-    color: #666;
+    color: #555;
 }
 
 .add-list-btn {
@@ -696,8 +696,50 @@ button:disabled {
 }
 
 #task-list-section-header-container h2 {
-    font-size: 1.4rem;
+    font-size: clamp(1.4rem, 4vw, 1.4rem);
     margin: 0;
+}
+
+#task-list-sort-filter-container {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    font-size: 0.9rem;
+}
+
+#sort-task-list {
+    padding: 0.3rem 0.5rem;
+    margin: 0 0 0 0.5rem;
+    border: 1px solid var(--BLACK);
+    border-radius: 6px;
+    background-color: var(--BACKGROUND, #fff);
+    font-family: var(--TEXT-FONT);
+}
+
+#task-list-filter-container {
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    padding: 0.2rem 0.6rem;
+    display: flex;
+    gap: 0.75rem;
+}
+
+#task-list-filter-container legend {
+    font-size: 0.8rem;
+    color: #555;
+    padding: 0 0.2rem;
+}
+
+#task-list-filter-container label {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+}
+
+/* default border color for task card */
+.task-item {
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 /* priority color-coding via data attribute */
@@ -771,7 +813,7 @@ button:disabled {
 }
 
 .form-success {
-    color: var(--GREEN);
+    color: var(--GREEN-DARK);
     font-size: 0.9rem;
     margin: 0.25rem 0;
 }
@@ -782,160 +824,99 @@ footer {
     padding: 1.5rem 1rem;
 }
 
+/* sort and filter controls: wrap on narrow screens instead of overflowing */
 #task-list-sort-filter-container {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.75rem;
-    width: 100%;
+    flex-wrap: wrap;        /* sort box and filter box stack when there's no room */
+    gap: 0.5rem 1.5rem;
 }
 
-.sort-filter-elem {
+#task-list-filter-container {
+    flex-wrap: wrap;        /* tag checkboxes continue on a second line */
+    min-width: 0;           /* fieldsets refuse to shrink by default; this lets them */
+    max-width: 100%;
+}
+
+/* sort dropdown: the closed box and the open choices share one size */
+#sort-task-list,
+#sort-task-list option {
+    font-size: 0.9rem;
+}
+
+/* ==================== PROFILE PAGE ==================== */
+#profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+#profile-form label {
+    font-size: 1rem;
+    margin-top: 0.4rem;
+}
+
+#profile-form input {
+    width: 100%;                  /* full width on phones */
+}
+
+.field-hint {
+    font-size: 0.85rem;
+    color: #555;                  /* 5.47:1 on --LIGHT-PINK */
+}
+
+#profile-submit-btn {
+    margin-top: 0.6rem;
+}
+
+.form-success.hidden {            /* only add this if the grep below finds no such rule */
+    display: none;
+}
+
+.app-header h1 {
+    overflow-wrap: anywhere;      /* a very long display name wraps instead of overflowing */
     min-width: 0;
 }
 
-/* Sort Control Card */
-#task-list-sort-container.sort-filter-elem {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.45rem 0.7rem;
-    border: 1px solid rgba(0, 0, 0, 0.16);
-    border-radius: 10px;
-    background: var(--BACKGROUND, #ffffff);
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-}
-
-#sort-label {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #475569;
-    white-space: nowrap;
-}
-
-#sort-task-list {
-    appearance: none;
-    -webkit-appearance: none;
-    margin: 0;
-    min-width: 7.5rem;
-    padding: 0.32rem 2rem 0.32rem 0.7rem;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    border-radius: 999px;
-    background-color: #f8fafc;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 0.65rem center;
-    background-size: 0.85rem;
-    color: var(--BLACK-TEXT, #0f172a);
-    font: inherit;
-    font-size: 0.84rem;
-    font-weight: 500;
-    line-height: 1.25;
-    cursor: pointer;
-    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-#sort-task-list:hover {
-    border-color: var(--DARK-PINK, #f27395);
-    background-color: #fff5f7;
-}
-
-#sort-task-list:focus,
-#sort-task-list:focus-visible {
-    outline: none;
-    border-color: var(--DARK-PINK, #f27395);
-    background-color: var(--BACKGROUND, #ffffff);
-    box-shadow: 0 0 0 3px rgba(242, 115, 149, 0.22);
-}
-
-/* Dynamic Tag Filter Fieldset */
-#task-list-filter-container.sort-filter-elem {
+/* back link and log out sit in one row and share one look */
+.profile-actions {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.45rem;
-    flex: 1 1 16rem;
-    margin: 0;
-    padding: 0.5rem 0.75rem 0.65rem;
-    border: 1px solid rgba(0, 0, 0, 0.16);
-    border-radius: 10px;
-    background: var(--BACKGROUND, #ffffff);
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;               /* if a screen is very narrow, the second button wraps below */
+    margin-bottom: 1rem;
 }
 
-#filter-label {
-    padding: 0 0.35rem;
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-    color: #475569;
-}
-
-/* Checkbox label pills inside the fieldset */
-#task-list-filter-container.sort-filter-elem > label {
+.back-chevron {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
-    margin: 0;
-    padding: 0.25rem 0.6rem;
-    border: 1px solid rgba(0, 0, 0, 0.18);
-    border-radius: 999px;
-    background: #f8fafc;
-    color: var(--BLACK-TEXT, #0f172a);
-    font-size: 0.82rem;
-    font-weight: 500;
-    line-height: 1.25;
-    cursor: pointer;
-    user-select: none;
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    gap: 0.5rem;                        /* space between the chevron and the label */
+    min-height: 44px;                   /* comfortable tap target */
+    padding: 0 0.75rem 0 0.5rem;
+    border-radius: 0.5rem;
+    color: var(--BLACK-TEXT);           /* 10.24:1 on --LIGHT-PINK */
+    font-size: 0.95rem;                 /* same size as the "Profile Settings" link */
+    text-decoration: none;
 }
 
-#task-list-filter-container.sort-filter-elem > label:hover {
-    border-color: var(--DARK-PINK, #f27395);
-    background: #fff5f7;
+/* the sidebar chevron's drawing, turned the other way, now before the label */
+.back-chevron::before {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid #1a1a1a;
+    border-bottom: 2px solid #1a1a1a;
+    transform: rotate(135deg);          /* points left */
+    margin-left: 4px;                   /* optical nudge, since a rotated corner looks off-center */
 }
 
-#task-list-filter-container.sort-filter-elem input[type="checkbox"] {
-    margin: 0;
-    accent-color: var(--DARK-PINK, #f27395);
-    cursor: pointer;
+.back-chevron:hover,
+.back-chevron:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 3px;      /* a little air between the text and the line */
 }
 
-#task-list-filter-container.sort-filter-elem > label:has(input[type="checkbox"]:checked) {
-    border-color: var(--DARK-PINK, #f27395);
-    background: var(--LIGHT-PINK, rgba(242, 115, 149, 0.16));
-    color: var(--BLACK-TEXT, #0f172a);
-    font-weight: 600;
-}
-
-/* Mobile responsiveness */
-@media (max-width: 600px) {
-    #task-list-sort-filter-container {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.6rem;
-    }
-
-    #task-list-sort-container.sort-filter-elem {
-        justify-content: space-between;
-        width: 100%;
-        padding: 0.5rem 0.7rem;
-    }
-
-    #sort-task-list {
-        flex: 0 1 11rem;
-        padding: 0.38rem 2rem 0.38rem 0.75rem;
-        font-size: 0.86rem;
-    }
-
-    #task-list-filter-container.sort-filter-elem {
-        flex: none;
-        width: 100%;
-        padding: 0.5rem 0.65rem 0.6rem;
-    }
-
-    #task-list-filter-container.sort-filter-elem > label {
-        padding: 0.35rem 0.65rem;
-        font-size: 0.85rem;
-    }
+.app-header .logout-btn {
+    flex-shrink: 0;                  /* keeps the button at full size */
+    white-space: nowrap;             /* "Log Out" never splits across two lines */
+    margin-left: 0.75rem;            /* space between the name and the button */
 }
