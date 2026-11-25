@@ -117,28 +117,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const submitBtn     = createListForm.querySelector('.submit-modal-btn');
         const originalLabel = submitBtn ? submitBtn.textContent : '';
         if (submitBtn) {
-            submitBtn.disabled      = true;
-            submitBtn.textContent   = 'Creating...';
+            submitBtn.disabled    = true;
+            submitBtn.textContent = 'Creating...';
         }
-        
+
         // try/catch/finally so failures are handled and button always recovers
         try {
             const response = await fetch('/lists', {
-                method:    'POST',
+                method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: listName })
+                body:    JSON.stringify({ name: listName })
             });
 
-            if ( response.status === 401 ) { location.href = '/login'; return; }
+            if (response.status === 401) { location.href = '/login'; return; }
 
             const data = await response.json();
 
-            if ( response.ok ) {
+            if (response.ok) {
                 createListModal.classList.add('hidden');
                 createListForm.reset();
                 errorEl.classList.add('hidden');
                 await loadUserLists();
-                setActiveList(data.id.toString(), data.name);
+
+                const isOwner = resolveIsOwner(data, true);
+                setActiveList(data.id.toString(), data.name, isOwner);
             } else {
                 errorEl.textContent = data.error || 'Failed to create list';
                 errorEl.classList.remove('hidden');
@@ -148,8 +150,8 @@ document.addEventListener('DOMContentLoaded', () => {
             errorEl.classList.remove('hidden');
         } finally {
             if (submitBtn) {
-                submitBtn.disabled      = false;
-                submitBtn.textContent   = originalLabel; 
+                submitBtn.disabled    = false;
+                submitBtn.textContent = originalLabel;
             }
         }
     });
@@ -159,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
         collabListsNav.innerHTML = '';
         const li = document.createElement('li');
         li.textContent = text;
-        if (isError) lis.classList.add('form-error');
+        if (isError) li.classList.add('form-error');
         collabListsNav.appendChild(li);
     }
 
@@ -167,29 +169,33 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadUserLists() {
         try {
             const response = await fetch('/lists');
-            
-            if ( response.status === 401 ) { location.href = '/login'; return; }
-            
-            if ( !response.ok ) {
+
+            if (response.status === 401) { location.href = '/login'; return; }
+
+            if (!response.ok) {
                 showListMessage('Could not load your lists.', true);
                 return;
             }
-    
+
             const lists = await response.json();
             collabListsNav.innerHTML = '';
-            
-            if ( lists.length === 0 ) {
+
+            if (lists.length === 0) {
                 showListMessage('No shared lists yet.');
                 return;
             }
+
             lists.forEach(list => {
                 const li  = document.createElement('li');
                 const btn = document.createElement('button');
                 btn.classList.add('nav-item');
                 btn.dataset.listId = list.id;
                 btn.textContent = list.name;
-        
-                btn.addEventListener('click', () => setActiveList(list.id.toString(), list.name));
+
+                const isOwner = resolveIsOwner(list, false);
+                btn.dataset.isOwner = String(isOwner);
+
+                btn.addEventListener('click', () => setActiveList(list.id.toString(), list.name, isOwner));
                 li.appendChild(btn);
                 collabListsNav.appendChild(li);
             });
@@ -197,6 +203,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showListMessage('Could not reach the server.', true);
         }
     }
-    
+
     loadUserLists();
 });
