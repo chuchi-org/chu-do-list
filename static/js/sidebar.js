@@ -1,6 +1,24 @@
-// [FILENAME]: sidebarLists.js
+// [FILENAME]: sidebar.js
 
 window.activeListId = 'personal';
+window.activeListIsOwner = false;
+
+function resolveIsOwner(listOrData, fallback = false) {
+    if (!listOrData) return fallback;
+    if (typeof listOrData.is_owner === 'boolean') return listOrData.is_owner;
+    if (listOrData.role === 'owner') return true;
+
+    const currentUserId =
+        window.currentUserId ??
+        sessionStorage.getItem('user_id') ??
+        localStorage.getItem('user_id');
+
+    if (currentUserId != null && listOrData.owner_id != null) {
+        return Number(listOrData.owner_id) === Number(currentUserId);
+    }
+
+    return fallback;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
@@ -24,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebar.classList.remove('hidden');
         sidebarOverlay.classList.remove('hidden');
     }
-    
+
     function closeSidebar() {
         sidebar.classList.add('hidden');
         sidebarOverlay.classList.add('hidden');
@@ -42,10 +60,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // syncs active list ID, owner flag, and header ⋯ menu visibility
+    window.setActiveListContext = function ({ id, isOwner }) {
+        window.activeListId = id;
+        window.activeListIsOwner = Boolean(isOwner);
+
+        const menuWrap = document.getElementById('list-menu-wrap');
+        const menuBtn  = document.getElementById('list-menu-btn');
+        const dropdown = document.getElementById('list-menu-dropdown');
+
+        if (dropdown) dropdown.classList.add('hidden');
+        if (menuBtn) menuBtn.setAttribute('aria-expanded', 'false');
+
+        if (menuWrap) {
+            const canDeleteList = Boolean(id && id !== 'personal' && window.activeListIsOwner);
+            menuWrap.classList.toggle('hidden', !canDeleteList);
+        }
+    };
 
     // set active list state
-    function setActiveList(listId, listName) {
-        window.activeListId = listId;
+    function setActiveList(listId, listName, isOwner = false) {
+        window.setActiveListContext({ id: listId, isOwner });
         activeListTitle.textContent = listName;
 
         document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
@@ -53,9 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (listId === 'personal') {
             navPersonalBtn.classList.add('active');
             collabControls.classList.add('hidden');
-        }
-
-        else {
+        } else {
             const activeBtn = document.querySelector(`.nav-item[data-list-id="${listId}"]`);
             if (activeBtn) activeBtn.classList.add('active');
             collabControls.classList.remove('hidden');
@@ -66,11 +99,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof window.loadTasksForActiveList === 'function') {
             window.loadTasksForActiveList();
         }
-
     }
 
-    navPersonalBtn.addEventListener('click', () => setActiveList('personal', 'Personal Tasks'));
-
+    navPersonalBtn.addEventListener('click', () => setActiveList('personal', 'Personal Tasks', false));
 
     // modal controls for new list
     openListModalBtn.addEventListener('click', () => createListModal.classList.remove('hidden'));
@@ -86,28 +117,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const submitBtn     = createListForm.querySelector('.submit-modal-btn');
         const originalLabel = submitBtn ? submitBtn.textContent : '';
         if (submitBtn) {
-            submitBtn.disabled      = true;
-            submitBtn.textContent   = 'Creating...';
+            submitBtn.disabled    = true;
+            submitBtn.textContent = 'Creating...';
         }
-        
+
         // try/catch/finally so failures are handled and button always recovers
         try {
             const response = await fetch('/lists', {
-                method:    'POST',
+                method:  'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: listName })
+                body:    JSON.stringify({ name: listName })
             });
 
-            if ( response.status === 401 ) { location.href = '/login'; return; }
+            if (response.status === 401) { location.href = '/login'; return; }
 
             const data = await response.json();
 
-            if ( response.ok ) {
+            if (response.ok) {
                 createListModal.classList.add('hidden');
                 createListForm.reset();
                 errorEl.classList.add('hidden');
                 await loadUserLists();
-                setActiveList(data.id.toString(), data.name);
+
+                const isOwner = resolveIsOwner(data, true);
+                setActiveList(data.id.toString(), data.name, isOwner);
             } else {
                 errorEl.textContent = data.error || 'Failed to create list';
                 errorEl.classList.remove('hidden');
@@ -117,8 +150,8 @@ document.addEventListener('DOMContentLoaded', () => {
             errorEl.classList.remove('hidden');
         } finally {
             if (submitBtn) {
-                submitBtn.disabled      = false;
-                submitBtn.textContent   = originalLabel; 
+                submitBtn.disabled    = false;
+                submitBtn.textContent = originalLabel;
             }
         }
     });
@@ -128,7 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
         collabListsNav.innerHTML = '';
         const li = document.createElement('li');
         li.textContent = text;
-        if (isError) lis.classList.add('form-error');
+        if (isError) li.classList.add('form-error');
         collabListsNav.appendChild(li);
     }
 
@@ -136,29 +169,33 @@ document.addEventListener('DOMContentLoaded', () => {
     async function loadUserLists() {
         try {
             const response = await fetch('/lists');
-            
-            if ( response.status === 401 ) { location.href = '/login'; return; }
-            
-            if ( !response.ok ) {
+
+            if (response.status === 401) { location.href = '/login'; return; }
+
+            if (!response.ok) {
                 showListMessage('Could not load your lists.', true);
                 return;
             }
-    
+
             const lists = await response.json();
             collabListsNav.innerHTML = '';
-            
-            if ( lists.length === 0 ) {
+
+            if (lists.length === 0) {
                 showListMessage('No shared lists yet.');
                 return;
             }
+
             lists.forEach(list => {
                 const li  = document.createElement('li');
                 const btn = document.createElement('button');
                 btn.classList.add('nav-item');
                 btn.dataset.listId = list.id;
                 btn.textContent = list.name;
-        
-                btn.addEventListener('click', () => setActiveList(list.id.toString(), list.name));
+
+                const isOwner = resolveIsOwner(list, false);
+                btn.dataset.isOwner = String(isOwner);
+
+                btn.addEventListener('click', () => setActiveList(list.id.toString(), list.name, isOwner));
                 li.appendChild(btn);
                 collabListsNav.appendChild(li);
             });
@@ -166,7 +203,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showListMessage('Could not reach the server.', true);
         }
     }
-    
+
     loadUserLists();
 });
-

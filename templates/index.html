@@ -62,10 +62,29 @@
                     <div class="header-left">
                         <button id="toggle-sidebar-btn" class="icon-btn floating-sidebar-btn" title="Open Lists Menu" aria-label="Open Lists Menu">☰</button>
                         <h1 id="active-list-title">Personal Tasks</h1>
+
+                        <div id="list-menu-wrap" class="list-menu-wrap hidden">
+                            <button
+                                type="button"
+                                id="list-menu-btn"
+                                class="list-menu-btn"
+                                aria-label="List actions"
+                                aria-expanded="false"
+                                aria-haspopup="menu"
+                            >⋯</button>
+                            <div id="list-menu-dropdown" class="list-menu-dropdown hidden" role="menu">
+                                <button
+                                    type="button"
+                                    id="delete-list-btn"
+                                    class="list-menu-item delete-list-item"
+                                    role="menuitem"
+                                >Delete list</button>
+                            </div>
+                        </div>
                     </div>
                     <button id="add-task-btn" type="button" aria-label="Create a Task">+</button>
                 </header>
-                
+
 
                 <!-- collaboration controls (visible only when a collab list selected) -->
                 <!----------------------------------------------------------------------->
@@ -76,8 +95,8 @@
                     </div>
                     <p id="member-feedback" class="form-feedback hidden"></p>
                 </div>
-                
-                
+
+
                 <!-- task creation section -->
                 <!-------------------------------------------------------------->
                 <section class="task-form-section hidden" id="task-form-section">
@@ -88,14 +107,14 @@
 
                     <!-- form for task creation -->
                     <form id="task-form">
-                        
+
                         <!-- takes task name and due date input -->
                         <p>Task</p>
                         <input type="text" id="task-name" name="task" placeholder="What are we up to?" required>
-                        
+
                         <p>Deadline</p>
                         <input type="datetime-local" id="due-date-time" name="dueDateTime">
-                        
+
                         <!-- values are numbers to match constants in JS -->
                         <p>Priority</p>
                         <select id="priority-select" name="prioritySelect">
@@ -117,7 +136,7 @@
                     </form>
                 </section>
             </div>
-            
+
             <!-- task list section -->
             <section class="task-list-section">
                 <div id="task-list-section-header-container">
@@ -131,7 +150,7 @@
                                 <option value="date-added">Date Added</option>
                             </select>
                         </div>
-                        
+
                         <fieldset id="task-list-filter-container" class="sort-filter-elem">
                             <legend id="filter-label">Filter by tag:</legend>
                             <label><input type="checkbox" name="filter-tag" value="academic">Academic</label>
@@ -164,11 +183,11 @@
             </div>
         </div>
 
-        
+
         <footer>
             © 2026 chuhchi-org
         </footer>
-        
+
         <!-- JS scripts -->
         <script src="{{ url_for('static', filename='js/task.js') }}"></script>
         <script src="{{ url_for('static', filename='js/tasksRender.js') }}"></script>
