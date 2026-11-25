@@ -45,6 +45,37 @@ main.container {
     flex: 1 0 auto;
 }
 
+/* Less than 601px: stays right beside "Personal Tasks" in .header-left */
+.floating-sidebar-btn {
+    position: static;
+    box-shadow: none;
+}
+
+/* transfer sidepanel toggle button to top-left */
+@media (min-width: 601px) {
+    .floating-sidebar-btn {
+        position: fixed;
+        top: 0.9rem;
+        left: 0.9rem;
+        z-index: 90;
+        width: 42px;
+        height: 42px;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        border-radius: 10px;
+        background-color: var(--LIGHT-PINK);
+        color: var(--BLACK-TEXT);
+        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.35rem;
+    }
+
+    .floating-sidebar-btn:hover {
+        background-color: var(--DARK-PINK);
+    }
+}
+
 .add-task-card {
     max-width: 600px;
     width: 100%;
