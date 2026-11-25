@@ -1,0 +1,51 @@
+<!-- FILENAME: login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chu-Do List | Log In</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+
+</head>
+<body>
+    <main class="container">
+        <div id="center-div">
+            <h1>Chu-Do List</h1>
+            <div id="clickables">
+                <button id="show-login-modal-btn">Log In</button>
+                <a href="/signup" id="sign-up-link">Sign Up</a>
+            </div>
+        </div>
+    </main>
+
+    <div id="login-modal-container" class="hidden" role="dialog" aria-modal="true" aria-labelledby="login-title">
+        <div class="login-modal-card">
+            <h2 id="login-title">Login to Chu-Do List</h2>
+            <form id="login-form">
+                <div id="login-field-container">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" name="email" required autocomplete="email" placeholder="Enter your email here">
+                </div>
+                
+                <div id="password-field-container">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" name="password" required 
+                    autocomplete="current-password" placeholder="Enter your password here">
+                    <a href="/forgot-password" id="forgot-password-link">Forgot Password?</a>
+                </div>
+
+                <p id="error-message" class="hidden" role="alert"></p>
+
+                <button type="submit" id="submit-btn">Log In</button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        © 2026 chuhchi-org
+    </footer>
+
+    <script src = "{{ url_for('static', filename='js/login.js') }}"></script>
+</body>
+</html>

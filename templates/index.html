@@ -7,17 +7,98 @@
         <title>Chu-Do List</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     </head>
+
     <body>
+        <!-- overlay backdrop for sidebar -->
+        <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+        <!-- sliding sidebar nav -->
+        <aside id="sidebar" class="sidebar hidden">
+
+            <div class="sidebar-header">
+                <h2>Lists</h2>
+                <button id="close-sidebar-btn" class="icon-btn">
+                    &times;
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <!-- personal tasks -->
+                <div class="nav-section">
+                    <button id="nav-personal-btn" class="nav-item active" data-list-id="personal">
+                        Personal Tasks
+                    </button>
+                </div>
+
+                <hr class="nav-divider">
+
+                <!-- collaborative lists category -->
+                <div class="nav-section">
+                    <div class="section-title-row">
+                        <span class="section-title">Collaborative Lists</span>
+                        <button id="open-create-list-modal-btn" class="add-list-btn" title="Create New List">+</button>
+                    </div>
+
+                    <ul id="collab-lists-nav" class="collab-lists-list">
+                        <!-- contents rendered via JS injection -->
+                    </ul>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="{{ url_for('profile.get_profile') }}" class="sidebar-link">Profile Settings</a>
+                <button id="logout-btn" class="logout-btn">Log Out</button>
+            </div>
+        </aside>
+
+
+
+        <!-- main page container -->
         <main class="container">
             <!-- header + task creation card -->
             <div class="add-task-card">
                 <!-- title + add task btn -->
                 <header class="app-header">
-                    <h1>Chu-Do List</h1>
-                    <button id="add-task-btn" type="button">+</button>
+                    <div class="header-left">
+                        <button id="toggle-sidebar-btn" class="icon-btn floating-sidebar-btn" title="Open Lists Menu" aria-label="Open Lists Menu">☰</button>
+                        <h1 id="active-list-title">Personal Tasks</h1>
+
+                        <div id="list-menu-wrap" class="list-menu-wrap hidden">
+                            <button
+                                type="button"
+                                id="list-menu-btn"
+                                class="list-menu-btn"
+                                aria-label="List actions"
+                                aria-expanded="false"
+                                aria-haspopup="menu"
+                            >⋯</button>
+                            <div id="list-menu-dropdown" class="list-menu-dropdown hidden" role="menu">
+                                <button
+                                    type="button"
+                                    id="delete-list-btn"
+                                    class="list-menu-item delete-list-item"
+                                    role="menuitem"
+                                >Delete list</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="add-task-btn" type="button" aria-label="Create a Task">+</button>
                 </header>
-                
+
+
+                <!-- collaboration controls (visible only when a collab list selected) -->
+                <!----------------------------------------------------------------------->
+                <div id="collab-header-controls" class="collab-controls-bar hidden">
+                    <div class="add-member-inline">
+                        <input type="email" id="member-email-input" placeholder="Add collaborator by email...">
+                        <button id="add-member-btn" type="submit">Add</button>
+                    </div>
+                    <p id="member-feedback" class="form-feedback hidden"></p>
+                </div>
+
+
                 <!-- task creation section -->
+                <!-------------------------------------------------------------->
                 <section class="task-form-section hidden" id="task-form-section">
                     <hr class="section-divider">
                     <div class="task-form-header">
@@ -26,14 +107,14 @@
 
                     <!-- form for task creation -->
                     <form id="task-form">
-                        
+
                         <!-- takes task name and due date input -->
                         <p>Task</p>
                         <input type="text" id="task-name" name="task" placeholder="What are we up to?" required>
-                        
+
                         <p>Deadline</p>
                         <input type="datetime-local" id="due-date-time" name="dueDateTime">
-                        
+
                         <!-- values are numbers to match constants in JS -->
                         <p>Priority</p>
                         <select id="priority-select" name="prioritySelect">
@@ -55,7 +136,7 @@
                     </form>
                 </section>
             </div>
-            
+
             <!-- task list section -->
             <section class="task-list-section">
                 <div id="task-list-section-header-container">
@@ -64,12 +145,12 @@
                         <div id="task-list-sort-container" class="sort-filter-elem">
                             <label for="sort-task-list" id="sort-label">Sort by:</label>
                             <select name="" id="sort-task-list">
-                                <option value="">Priority</option>
-                                <option value="">Due Date</option>
-                                <option value="">Date Added</option>
+                                <option value="priority">Priority</option>
+                                <option value="due-date">Due Date</option>
+                                <option value="date-added">Date Added</option>
                             </select>
                         </div>
-                        
+
                         <fieldset id="task-list-filter-container" class="sort-filter-elem">
                             <legend id="filter-label">Filter by tag:</legend>
                             <label><input type="checkbox" name="filter-tag" value="academic">Academic</label>
@@ -84,14 +165,34 @@
             </section>
 
         </main>
-        
+
+
+        <div id="create-list-modal" class="modal-backdrop hidden">
+            <div class="modal-card">
+                <div class="modal-header">
+                    <h2>Create New List</h2>
+                    <button id="close-list-modal-btn">&times;</button>
+                </div>
+
+                <form id="create-list-form">
+                    <p>List Title</p>
+                    <input type="text" id="new-list-name" placeholder="e.g. Group Project" required>
+                    <p id="create-list-error" class="form-error hidden"></p>
+                    <button type="submit" class="submit-modal-btn">Create List</button>
+                </form>
+            </div>
+        </div>
+
+
         <footer>
             © 2026 chuhchi-org
         </footer>
-        
+
         <!-- JS scripts -->
-        <script src = "{{ url_for('static', filename='js/task.js') }}"></script>
-        <script src = "{{ url_for('static', filename='js/tasksRender.js') }}"></script>
-        <script src = "{{ url_for('static', filename='js/ui.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/task.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/tasksRender.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/sidebar.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/collab.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
     </body>
 </html>

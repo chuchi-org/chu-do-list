@@ -1,103 +1,64 @@
-from flask import Flask,jsonify, request, render_template
-import sqlite3
-from pathlib import Path
+# --------------------------------
+#   app.py - sets up entire app
+# --------------------------------
+import os
+from dotenv import load_dotenv
+from flask import Flask, render_template, session, redirect, jsonify, request
+from db import init_db
+from werkzeug.exceptions import HTTPException
+from routes.tasks import tasks_bp
+from routes.auth import auth_bp
+from routes.profile import profile_bp
+from routes.lists import lists_bp
 
-# dynamically creates an absolute file path to tasks.db located in the same folder of app.py
-# __file__ : Python's built-in reference to the current script's path
-DB_PATH = Path(__file__).parent / "tasks.db"
-app = Flask(__name__, template_folder="../templates", static_folder="../static")
 
-@app.route("/")
-def index():
-    return render_template("index.html")
-@app.route("/tasks", methods=["GET"])
-# read
-def get_tasks():
-    # defining connection & cursor
-    connection  = sqlite3.connect(DB_PATH)  # opens connection to tasks.db
-    cursor      = connection.cursor()       # sends instructions / receives results via connection ^
+load_dotenv()   # reads .env into os.environ
+                # must run before create_app() reads SECRET_KEY
 
-    cursor.execute("SELECT * FROM tasks")   # instruction sent to DB
-    rows        = cursor.fetchall()
+def wants_html():
+    # JSON is listed first, so fetch() (which sends */*) gets JSON.
+    # Browsers rank text/html above */*, so page visits still get HTML.
+    best = request.accept_mimetypes.best_match(["application/json", "text/html"])
+    return best == "text/html"
 
-    cursor.close()          # closes the opened Cursor
-    connection.close()      # terminates the active link between Py script and SQLite DB
+def create_app():
+    app = Flask(__name__, template_folder="../templates", static_folder="../static")
+    app.secret_key = os.environ["SECRET_KEY"]
 
-    tasks = []
-    # converting tuples from SQLite into key-value pairs (dictionaries)
-    for row in rows:
-        tasks.append({
-            "id": row[0],
-            "title": row[1],
-            "due_datetime": row[2],
-            "priority": row[3],
-            "tag": row[4],
-            "is_done": row[5],
-            "created_at":row[6]
-        })
-    return jsonify(tasks)   # converts data into a JSON string and sends it as response to caller
+    app.register_blueprint(tasks_bp)
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(profile_bp)
+    app.register_blueprint(lists_bp)
 
-# create
-@app.route("/tasks", methods=["POST"])
-def create_task():
-    data = request.get_json()   # reads request body (JSON) from frontend and parses it into dict
+    @app.route("/")
+    def index():
+        if "user_id" not in session:            # if user_id key is missing,
+            return redirect("/login")           # sends them to login, before index could render
+        return render_template("index.html")    # proceeds to index/to-do list
 
-    connection  = sqlite3.connect(DB_PATH)  
-    cursor      = connection.cursor()      
-    
-    cursor.execute(
-    "INSERT INTO tasks (title, due_datetime, priority, tag, is_done, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-    (data["title"], data["due_datetime"], data["priority"], data["tag"], 0, data["created_at"])
-    )   # '?' are placeholder values for the actual values inside the tuple, used to avoid SQL injection
+    @app.errorhandler(HTTPException)
+    def handle_http_error(e):
+        # covers anything Flask raises on its own
+        if wants_html():
+            return(f"<h1>{e.code} {e.name}</h1><p>{e.description}</p>"
+                    "<p><a href='/'>Back to home</a></p>"), e.code
+        return jsonify({"error": e.description}),e.code
 
-    connection.commit()     # permanently saves all the pending changes made during the current transaction to the database file
-    new_id      = cursor.lastrowid  # grabs the auto-generated id of the row just inserted
-    cursor.close()          
-    connection.close()      
+    @app.errorhandler(Exception)
+    def handle_unexpected_error(e):
+        # covers crashes in our own code
+        # e.g. KeyError, bugs
+        app.logger.exception("Unhandled error") # full traceback still goes to the terminal
+        if wants_html():
+            return ("<h1>500 Something went wrong</h1>"
+                    "<p>Please try again in a moment.</p>"
+                    "<p><a href='/'>Back to home</a></p>"), 500
+        return jsonify({"error": "Something went wrong on our side. Please try again."}), 500
 
-    return jsonify({"id": new_id, **data, "is_done": 0}), 201   # 201 sets HTTP status to 201 Created
+    init_db()       # runs on every startup / import, so host gets their tables
+    return app
 
-# update
-@app.route("/tasks/<int:task_id>", methods=["PUT"])      # <int:task_id> gets number from URL and passes it to function as task_id with type int
-def update_task(task_id):
-    data = request.get_json()   # parses updated values given by frontend from a JSON body into a dict
-
-    connection = sqlite3.connect(DB_PATH)
-    cursor = connection.cursor()
-
-    cursor.execute(
-    "UPDATE tasks SET title=?, due_datetime=?, priority=?, tag=?, is_done=?  WHERE id=?",
-    (data["title"], data["due_datetime"], data["priority"], data["tag"], data["is_done"], task_id)
-    )
-
-    connection.commit()
-    cursor.close()
-    connection.close()
-
-    return jsonify({"status": "updated", "id": task_id})
-
-@app.route("/tasks/<int:task_id>", methods=["DELETE"])
-def delete_task(task_id):
-    connection  = sqlite3.connect(DB_PATH)
-    cursor      = connection.cursor()
-    cursor.execute("DELETE FROM tasks WHERE id=?", (task_id,))
-    connection.commit()
-    cursor.close()
-    connection.close()
-
-    return jsonify({"status": "deleted", "id": task_id})
+app = create_app()  # hosts import this name
 
 if __name__ == "__main__":
-    connection = sqlite3.connect(DB_PATH)
-    cursor = connection.cursor()
-
-    # create task table
-    create_schema_command = """CREATE TABLE IF NOT EXISTS
-    tasks(id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, due_datetime TEXT, priority INTEGER, tag TEXT, is_done INTEGER, created_at TEXT)"""
-
-    cursor.execute(create_schema_command)
-    connection.commit()     # permanently saves all the pending changes made during the current transaction to the database file
-    cursor.close()          # closes the opened Cursor
-    connection.close()      # terminates the active link between Py script and SQLite DB
-
     app.run(debug=True)

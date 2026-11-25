@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Chu-Do List | Sign Up</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/signup.css') }}">
+    </head>
+    <body>
+        <main>
+            <div id="center-div">
+                <div class="signup-card">
+                    <h1>Sign Up to Chu-Do List</h1>
+                    <form id="signup-form">
+                        <div class="field-container">
+                            <label for="display-name">Display Name</label>
+                            <input type="text" id="display-name" name="displayName" required
+                                autocomplete="name" placeholder="Jane Doe">
+                        </div>
+
+                        <div class="field-container">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" required
+                                autocomplete="email" placeholder="sample@email.com">
+                        </div>
+
+                        <div class="field-container">
+                            <label for="password">Password</label>
+                            <input type="password" id="password" name="password" required
+                                minlength="8" autocomplete="new-password" aria-describedby="password-hint"
+                                placeholder="Enter your password here">
+                            <p id="password-hint" class="field-hint">At least 8 characters.</p>
+                        </div>
+
+                        <p id="signup-error" class="form-error hidden" role="alert"></p>
+
+                        <button type="submit" id="signup-submit-btn">Sign Up</button>
+                    </form>
+                </div>
+
+                <a id="login-link" href="/login">Already have an account? Log in</a>
+            </div>
+        </main>
+        
+        <footer>
+                © 2026 chuhchi-org
+        </footer>
+        
+        <script src = "{{ url_for('static', filename='js/signup.js') }}"></script>
+    </body>
+</html>

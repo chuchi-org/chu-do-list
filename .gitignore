@@ -2,3 +2,10 @@
 venv/
 tasks.db
 tasktest.html
+activating_venv.txt
+questions.md
+.env
+sample-acc.txt
+test_schema.py
+__pycache__/
+lab3-test-accs.txt

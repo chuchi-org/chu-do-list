@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Chu-Do List | Profile</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    </head>
+    <body>
+        <main class="container">
+            <div class="add-task-card">
+                
+                <div class="profile-actions">
+                    <a href="/"class="back-chevron">Back to tasks</a>
+                </div>
+                
+                <header class="app-header">
+                    <h1>Hello, {{ display_name }}</h1>
+                    <button id="logout-btn" class="logout-btn">Log Out</button>
+                </header>
+
+                <hr class="section-divider">
+
+                <section id="edit-profile-section">
+                    <h2>Edit Profile</h2>
+                    <form id="profile-form">
+                        <label for="profile-display-name">Edit Profile</label>
+                        <input type="text" id="profile-display-name" value="{{ display_name }}" required
+                            placeholder="Jane Doe">
+                            
+                        <label for="profile-email">Email</label>
+                        <input type="email" id="profile-email" value="{{ email }}" required
+                            placeholder="sample@email.com">
+
+                        <label for="profile-password">New Password</label>
+                        <input type="password" id="profile-password" minlength="8"
+                            autocomplete="new-password" aria-describedby="password-hint">
+                        <small id="password-hint" class="field-hint">
+                            Leave blank to keep your current password. At least 8 characters.
+                        </small>
+
+                        <p id="profile-error" class="form-error hidden" role="alert"></p>
+                        <p id="profile-success" class="form-success hidden" role="status"></p>
+
+                        <button type="submit" id="profile-submit-btn">Save Changes</button>
+                    </form>
+                </section>
+            </div>
+        </main>
+
+        <footer>
+            © 2026 chuhchi-org
+        </footer>
+
+        <script src = "{{ url_for('static', filename='js/profile.js') }}"></script>
+    </body>
+</html>
