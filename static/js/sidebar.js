@@ -82,49 +82,91 @@ document.addEventListener('DOMContentLoaded', () => {
         const listName      = listNameInput.value.trim();
         const errorEl       = document.getElementById('create-list-error');
 
-        const response = await fetch('/lists', {
-            method:    'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: listName })
-        });
-
-        const data = await response.json();
-
-        if ( response.ok ) {
-            createListModal.classList.add('hidden');
-            createListForm.reset();
-            errorEl.classList.add('hidden');
-            await loadUserLists();
-            setActiveList(data.id.toString(), data.name);
+        // loading state on Create button
+        const submitBtn     = createListForm.querySelector('.submit-modal-btn');
+        const originalLabel = submitBtn ? submitBtn.textContent : '';
+        if (submitBtn) {
+            submitBtn.disabled      = true;
+            submitBtn.textContent   = 'Creating...';
         }
+        
+        // try/catch/finally so failures are handled and button always recovers
+        try {
+            const response = await fetch('/lists', {
+                method:    'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: listName })
+            });
 
-        else {
-            errorEl.textContent = data.error || 'Failed to create list';
+            if ( response.status === 401 ) { location.href = '/login'; return; }
+
+            const data = await response.json();
+
+            if ( response.ok ) {
+                createListModal.classList.add('hidden');
+                createListForm.reset();
+                errorEl.classList.add('hidden');
+                await loadUserLists();
+                setActiveList(data.id.toString(), data.name);
+            } else {
+                errorEl.textContent = data.error || 'Failed to create list';
+                errorEl.classList.remove('hidden');
+            }
+        } catch (err) {
+            errorEl.textContent = 'Could not reach the server. Please try again.';
             errorEl.classList.remove('hidden');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled      = false;
+                submitBtn.textContent   = originalLabel; 
+            }
         }
     });
 
-    // load collaborative lists into sidebar
-    async function loadUserLists() {
-        const response = await fetch('/lists');
-        if ( !response.ok ) return;
-    
-        const lists = await response.json();
+    // helper: one line of text in the sidebar list area (empty / error)
+    function showListMessage(text, isError = false) {
         collabListsNav.innerHTML = '';
-    
-        lists.forEach(list => {
-            const li  = document.createElement('li');
-            const btn = document.createElement('button');
-            btn.classList.add('nav-item');
-            btn.dataset.listId = list.id;
-            btn.textContent = list.name;
-    
-            btn.addEventListener('click', () => setActiveList(list.id.toString(), list.name));
-            li.appendChild(btn);
-            collabListsNav.appendChild(li);
-        });
+        const li = document.createElement('li');
+        li.textContent = text;
+        if (isError) lis.classList.add('form-error');
+        collabListsNav.appendChild(li);
     }
 
+    // load collaborative lists into sidebar
+    async function loadUserLists() {
+        try {
+            const response = await fetch('/lists');
+            
+            if ( response.status === 401 ) { location.href = '/login'; return; }
+            
+            if ( !response.ok ) {
+                showListMessage('Could not load your lists.', true);
+                return;
+            }
+    
+            const lists = await response.json();
+            collabListsNav.innerHTML = '';
+            
+            if ( lists.length === 0 ) {
+                showListMessage('No shared lists yet.');
+                return;
+            }
+            lists.forEach(list => {
+                const li  = document.createElement('li');
+                const btn = document.createElement('button');
+                btn.classList.add('nav-item');
+                btn.dataset.listId = list.id;
+                btn.textContent = list.name;
+        
+                btn.addEventListener('click', () => setActiveList(list.id.toString(), list.name));
+                li.appendChild(btn);
+                collabListsNav.appendChild(li);
+            });
+        } catch (err) {
+            showListMessage('Could not reach the server.', true);
+        }
+    }
+    
     loadUserLists();
 });
 
