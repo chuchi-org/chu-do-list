@@ -25,10 +25,12 @@
                     <h2>Edit Profile</h2>
                     <form id="profile-form">
                         <label for="profile-display-name">Edit Profile</label>
-                        <input type="text" id="profile-display-name" value="{{ display_name }}" required>
+                        <input type="text" id="profile-display-name" value="{{ display_name }}" required
+                            placeholder="Jane Doe">
                             
                         <label for="profile-email">Email</label>
-                        <input type="email" id="profile-email" value="{{ email }}" required>
+                        <input type="email" id="profile-email" value="{{ email }}" required
+                            placeholder="sample@email.com">
 
                         <label for="profile-password">New Password</label>
                         <input type="password" id="profile-password" minlength="8"
