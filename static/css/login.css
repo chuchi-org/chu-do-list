@@ -200,6 +200,10 @@ button:disabled {
     padding: 0.5rem 0;
 }
 
+#forgot-password-link:hover {
+    text-decoration-thickness: 2px;
+}
+
 button:focus-visible,
 a:focus-visible,
 input:focus-visible {
